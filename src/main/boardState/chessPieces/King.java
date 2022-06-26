@@ -2,6 +2,8 @@ package main.boardState.chessPieces;
 
 import java.util.ArrayList;
 
+import main.boardState.BoardUtils;
+
 public class King extends Piece {
     int range = 1;
 
@@ -11,7 +13,6 @@ public class King extends Piece {
         // The starting position of the King is either e1 or e8
         setX_pos(5);
         if (team == 'w') setY_pos(1); else setY_pos(8);
-        setPossibleMoves();
     }
 
     @Override
@@ -23,13 +24,8 @@ public class King extends Piece {
     public void setPossibleMoves() {
         this.possibleMoves = new ArrayList<>();
 
-        this.possibleMoves.addAll(PieceUtils.getDiagonalMoves(this, range));
-        this.possibleMoves.addAll(PieceUtils.getAdjacentMoves(this, range));
-
-        if (!hasMoved) {
-            this.possibleMoves.add(PieceUtils.convertXYPosToNotation(3, 1));
-            this.possibleMoves.add(PieceUtils.convertXYPosToNotation(7, 1));
-        }
+        this.possibleMoves.addAll(BoardUtils.getDiagonalMoves(this, range));
+        this.possibleMoves.addAll(BoardUtils.getAdjacentMoves(this, range));
     }
     
 }

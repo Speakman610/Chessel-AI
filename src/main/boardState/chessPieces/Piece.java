@@ -1,8 +1,8 @@
 package main.boardState.chessPieces;
 
-import java.io.EOFException;
 import java.util.List;
 
+import main.boardState.BoardUtils;
 import main.exceptions.InvalidMoveException;
 
 public abstract class Piece {
@@ -23,38 +23,40 @@ public abstract class Piece {
     public abstract void setCurrentlyAttacking();
     public abstract void setPossibleMoves();
 
-    protected boolean movePiece(int x_pos, int y_pos) throws InvalidMoveException {
-        String inputMove = PieceUtils.convertXYPosToNotation(x_pos, y_pos);
-        for (String move : getPossibleMoves()) {
-            if(inputMove.equals(move)) {
+    public boolean movePiece(int x_pos, int y_pos) throws InvalidMoveException {
+        String inputMove = notation + BoardUtils.convertXYPosToNotation(x_pos, y_pos);
+        for (String possibleMove : getPossibleMoves()) {
+            if(inputMove.equals(possibleMove)) {
                 this.x_pos = x_pos;
                 this.y_pos = y_pos;
+                this.setPossibleMoves();
+                this.setCurrentlyAttacking();
                 hasMoved = true;
                 return true;
             }
         }
 
-        throw new InvalidMoveException("Invalid Move: The move " + inputMove + " is not a valid move.");
+        throw new InvalidMoveException("The move " + notation + inputMove + " is not a valid move.");
     }
 
-    protected boolean canMoveRight() { // Right is horizontal in the positive direction
+    public boolean canMoveRight() { // Right is horizontal in the positive direction
         return getX_pos() + 1 <= 8;
     }
 
-    protected boolean canMoveLeft() { // Left is horizontal in the negative direction
+    public boolean canMoveLeft() { // Left is horizontal in the negative direction
         return getX_pos() - 1 >= 1;
     }
 
-    protected boolean canMoveUp() { // Up is vertical in the positive direction
+    public boolean canMoveUp() { // Up is vertical in the positive direction
         return getY_pos() + 1 <= 8;
     }
 
-    protected boolean canMoveDown() { // Down is vertical in the negative direction
+    public boolean canMoveDown() { // Down is vertical in the negative direction
         return getY_pos() - 1 >= 1;
     }
 
     public void printLocation() {
-        System.out.println(PieceUtils.convertXYPosToNotation(this.x_pos, this.y_pos));
+        System.out.println(BoardUtils.convertXYPosToNotation(this.x_pos, this.y_pos));
     }
 
     public char getTeam() {
