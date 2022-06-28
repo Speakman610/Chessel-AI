@@ -10,7 +10,6 @@ public abstract class Piece {
     protected int x_pos;
     protected int y_pos;
     protected String notation;
-    protected List<String> currentlyAttacking;
     protected List<String> possibleMoves;
     protected boolean hasMoved; // has this piece moved this game
 
@@ -20,7 +19,6 @@ public abstract class Piece {
         this.hasMoved = false;
     }
     
-    public abstract void setCurrentlyAttacking();
     public abstract void setPossibleMoves();
 
     public void movePiece(int x_pos, int y_pos) throws InvalidMoveException {
@@ -30,7 +28,6 @@ public abstract class Piece {
                 this.x_pos = x_pos;
                 this.y_pos = y_pos;
                 this.setPossibleMoves();
-                this.setCurrentlyAttacking();
                 hasMoved = true;
             }
         }
@@ -92,10 +89,6 @@ public abstract class Piece {
 
     public List<String> getPossibleMoves() {
         return this.possibleMoves;
-    }
-
-    public List<String> getCurrentlyAttacking() {
-        return this.currentlyAttacking;
     }
 
 }

@@ -8,21 +8,26 @@ public class Chessel {
         System.out.println("Welcome to Chessel!");
         BoardState board = BoardState.getBoardState();
         board.setPossibleMoves();
+        String testPiece = "K";
         List<String> possibleMoves = board.getPossibleMoves('w');
 
+        System.out.println("\nMOVES FOR WHITE: ");
         for (String move : possibleMoves) {
-            System.out.println(move);
+            if (move.startsWith(testPiece)) {
+                System.out.println(move);
+            }
         }
 
-        // System.out.println("SWAP TURNS");
-        // board.makeMove("Ka1");
+        possibleMoves = board.getPossibleMoves('b');
 
-        // possibleMoves = board.getPossibleMoves('w');
+        System.out.println("\nMOVES FOR BLACK: ");
+        for (String move : possibleMoves) {
+            if (move.startsWith(testPiece)) {
+                System.out.println(move);
+            }
+        }
 
-        // for (String move : possibleMoves) {
-        //     System.out.println(move);
-        // }
-
+        // System.out.println("\nCURRENT BOARD: ");
         // board.printCurrentBoard();
     }
 }

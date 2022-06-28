@@ -1,5 +1,6 @@
 package main.boardState;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,7 @@ public class BoardUtils {
 
     // Only accepts the location (i.e. a3, e4, etc.), not the piece moving or any extra notation
     public static int[] convertNotationCoordToXYCoord(String notation) {
+        if (notation.length() != 2) throw new InvalidParameterException("Cannot convert notation: Notation expected to be of length 2 but was actually of length " + notation.length());
         char xChar = notation.charAt(0);
         char yChar = notation.charAt(1);
 
@@ -55,7 +57,6 @@ public class BoardUtils {
 
     public static List<String> getDiagonalMoves(Piece piece, int range) {
         List<String> diagonalMoves = new ArrayList<>();
-        Map<String, Piece> board = BoardState.getBoardState().getBoard();
 
         if (piece.canMoveRight() && piece.canMoveUp()) {
             diagonalMoves.addAll(getMovesInDirection(piece, range, Direction.POSITIVE, Direction.POSITIVE));
@@ -132,9 +133,9 @@ public class BoardUtils {
 
         for (int i = 1; i <= range; i++) {
             if (piece.getX_pos() + (i * horizontalInt) <= 8 &&
-                piece.getX_pos() + (i * horizontalInt) >= 1 &&
-                piece.getY_pos() + (i * verticalInt) <= 8 && 
-                piece.getY_pos() + (i * verticalInt) >= 1) {
+                    piece.getX_pos() + (i * horizontalInt) >= 1 &&
+                    piece.getY_pos() + (i * verticalInt) <= 8 && 
+                    piece.getY_pos() + (i * verticalInt) >= 1) {
                 String notationCoord = convertXYPosToNotation(piece.getX_pos() + (i * horizontalInt), piece.getY_pos() + (i * verticalInt));
                 if (board.containsKey(notationCoord)) {
                     if (board.get(notationCoord).getTeam() != piece.getTeam()) {

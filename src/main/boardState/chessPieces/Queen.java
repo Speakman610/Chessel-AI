@@ -16,12 +16,6 @@ public class Queen extends Piece {
     }
 
     @Override
-    public void setCurrentlyAttacking() {
-        this.currentlyAttacking = this.possibleMoves;
-        
-    }
-
-    @Override
     public void setPossibleMoves() {
         this.possibleMoves = new ArrayList<>();
 

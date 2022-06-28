@@ -4,13 +4,12 @@ import java.util.ArrayList;
 
 import main.boardState.BoardUtils;
 
-public class King extends Piece {
-    int range = 1;
+public class Rook extends Piece {
+    int range = 8;
 
-    public King(char team, int x_pos, int y_pos) {
-        super(team, "K");
-
-        // The starting position of the King is either e1 or e8
+    public Rook(char team, int x_pos, int y_pos) {
+        super(team, "R");
+        
         setX_pos(x_pos);
         setY_pos(y_pos);
     }
@@ -19,7 +18,6 @@ public class King extends Piece {
     public void setPossibleMoves() {
         this.possibleMoves = new ArrayList<>();
 
-        this.possibleMoves.addAll(BoardUtils.getDiagonalMoves(this, range));
         this.possibleMoves.addAll(BoardUtils.getAdjacentMoves(this, range));
     }
     
