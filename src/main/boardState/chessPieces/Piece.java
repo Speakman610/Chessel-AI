@@ -22,17 +22,26 @@ public abstract class Piece {
     public abstract void setPossibleMoves();
 
     public void movePiece(int x_pos, int y_pos) throws InvalidMoveException {
-        String inputMove = notation + BoardUtils.convertXYPosToNotation(x_pos, y_pos);
-        for (String possibleMove : getPossibleMoves()) {
-            if(inputMove.equals(possibleMove)) {
-                this.x_pos = x_pos;
-                this.y_pos = y_pos;
-                this.setPossibleMoves();
-                hasMoved = true;
-            }
-        }
+        // String inputMove = notation + BoardUtils.convertXYPosToNotation(x_pos, y_pos);
+        // for (String possibleMove : getPossibleMoves()) {
+        //     if(inputMove.equals(possibleMove)) {
+        //         this.x_pos = x_pos;
+        //         this.y_pos = y_pos;
+        //         this.setPossibleMoves();
+        //         hasMoved = true;
+        //     }
+        // }
 
-        throw new InvalidMoveException("The move " + notation + inputMove + " is not a valid move.");
+        this.x_pos = x_pos;
+        this.y_pos = y_pos;
+        this.setPossibleMoves();
+        hasMoved = true;
+
+        // throw new InvalidMoveException("The move " + notation + inputMove + " is not a valid move.");
+    }
+
+    public boolean hasMoved() {
+        return this.hasMoved;
     }
 
     public boolean canMoveRight() { // Right is horizontal in the positive direction

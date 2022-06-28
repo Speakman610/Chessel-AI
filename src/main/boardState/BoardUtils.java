@@ -55,6 +55,58 @@ public class BoardUtils {
         return "" + xChar + yChar;
     }
 
+    public static boolean canCastle(char team) {
+        Map<String, Piece> board = BoardState.getBoardState().getBoard();
+
+        boolean kingCanCastle = false;
+        boolean rookACanCastle = false;
+        boolean rookHCanCastle = false;
+        boolean queenSideClear = false;
+        boolean kingSideClear = false;
+
+        if (team == 'w') {
+            if (board.containsKey("e1")) kingCanCastle = !board.get("e1").hasMoved();
+            if (board.containsKey("a1")) rookACanCastle = !board.get("a1").hasMoved();
+            if (board.containsKey("h1")) rookHCanCastle = !board.get("h1").hasMoved();
+            queenSideClear = !(board.containsKey("d1") && board.containsKey("c1") && board.containsKey("b1"));
+            kingSideClear = !(board.containsKey("f1") && board.containsKey("g1"));
+        }
+
+        return kingCanCastle && ((rookACanCastle && queenSideClear) || (rookHCanCastle && kingSideClear));
+    }
+
+    public static List<String> getCastling(char team) {
+        List<String> castlingOptions = new ArrayList<>();
+        Map<String, Piece> board = BoardState.getBoardState().getBoard();
+
+        boolean kingCanCastle = false;
+        boolean rookACanCastle = false;
+        boolean rookHCanCastle = false;
+        boolean queenSideClear = false;
+        boolean kingSideClear = false;
+
+        if (team == 'w') {
+            if (board.containsKey("e1")) kingCanCastle = !board.get("e1").hasMoved();
+            if (board.containsKey("a1")) rookACanCastle = !board.get("a1").hasMoved();
+            if (board.containsKey("h1")) rookHCanCastle = !board.get("h1").hasMoved();
+            queenSideClear = !(board.containsKey("d1") || board.containsKey("c1") || board.containsKey("b1"));
+            kingSideClear = !(board.containsKey("f1") || board.containsKey("g1"));
+        } else {
+            if (board.containsKey("e8")) kingCanCastle = !board.get("e8").hasMoved();
+            if (board.containsKey("a8")) rookACanCastle = !board.get("a8").hasMoved();
+            if (board.containsKey("h8")) rookHCanCastle = !board.get("h8").hasMoved();
+            queenSideClear = !(board.containsKey("d8") || board.containsKey("c8") || board.containsKey("b8"));
+            kingSideClear = !(board.containsKey("f8") || board.containsKey("g8"));
+        }
+
+        if (kingCanCastle) {
+            if (rookACanCastle && queenSideClear) castlingOptions.add("O-O-O");
+            if (rookHCanCastle && kingSideClear) castlingOptions.add("O-O");
+        }
+
+        return castlingOptions;
+    }
+
     public static List<String> getDiagonalMoves(Piece piece, int range) {
         List<String> diagonalMoves = new ArrayList<>();
 

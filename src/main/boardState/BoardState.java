@@ -14,12 +14,14 @@ import main.boardState.chessPieces.Rook;
 public class BoardState implements BoardState_Interface {
     private static BoardState boardState = null; // instance of the board state to create a singleton class
     private Map<String, Piece> board;
+    private Map<String, Integer> whiteAttackMap;
+    private Map<String, Integer> blackAttackMap;
     private char turn; // the current turn in the game
 
     private BoardState() {
         // create the board and add all of the pieces
         board = new HashMap<>();
-        
+
         // WHITE TEAM
         board.put("a1", new Rook('w', 1, 1));
         // Nb1
@@ -61,6 +63,8 @@ public class BoardState implements BoardState_Interface {
             }
         }
 
+        possibleMoves.addAll(BoardUtils.getCastling(team));
+
         return possibleMoves;
     }
 
@@ -88,6 +92,9 @@ public class BoardState implements BoardState_Interface {
         }
     }
 
+    // private void initializeAttackMaps() {
+    //     for (int i = 0; i < )
+    // }
 
     public Map<String,Piece> getBoard() {
         return this.board;
