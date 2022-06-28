@@ -23,7 +23,7 @@ public abstract class Piece {
     public abstract void setCurrentlyAttacking();
     public abstract void setPossibleMoves();
 
-    public boolean movePiece(int x_pos, int y_pos) throws InvalidMoveException {
+    public void movePiece(int x_pos, int y_pos) throws InvalidMoveException {
         String inputMove = notation + BoardUtils.convertXYPosToNotation(x_pos, y_pos);
         for (String possibleMove : getPossibleMoves()) {
             if(inputMove.equals(possibleMove)) {
@@ -32,7 +32,6 @@ public abstract class Piece {
                 this.setPossibleMoves();
                 this.setCurrentlyAttacking();
                 hasMoved = true;
-                return true;
             }
         }
 

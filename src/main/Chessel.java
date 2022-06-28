@@ -14,12 +14,15 @@ public class Chessel {
             System.out.println(move);
         }
 
-        board.makeMove("a1");
+        // System.out.println("SWAP TURNS");
+        // board.makeMove("Ka1");
 
-        possibleMoves = board.getPossibleMoves('w');
+        // possibleMoves = board.getPossibleMoves('w');
 
-        for (String move : possibleMoves) {
-            System.out.println(move);
-        }
+        // for (String move : possibleMoves) {
+        //     System.out.println(move);
+        // }
+
+        // board.printCurrentBoard();
     }
 }

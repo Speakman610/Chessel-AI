@@ -7,6 +7,7 @@ import java.util.Map;
 
 import main.boardState.chessPieces.King;
 import main.boardState.chessPieces.Piece;
+import main.boardState.chessPieces.Queen;
 
 public class BoardState implements BoardState_Interface {
     private static BoardState boardState = null; // instance of the board state to create a singleton class
@@ -16,8 +17,12 @@ public class BoardState implements BoardState_Interface {
     private BoardState() {
         // create the board and add all of the pieces
         board = new HashMap<>();
-        board.put("e1", new King('w'));
-        board.put("e8", new King('b'));
+        // WHITE TEAM
+        board.put("e1", new King('w', 5, 1));
+        board.put("d1", new Queen('w', 4, 1));
+        // BLACK TEAM
+        board.put("e8", new King('b', 5, 8));
+        board.put("d8", new Queen('b', 4, 8));
 
         turn = 'w';
     }
@@ -62,7 +67,9 @@ public class BoardState implements BoardState_Interface {
 
     @Override
     public void printCurrentBoard() {
-        // TODO Auto-generated method stub
+        for (Map.Entry<String, Piece> entry : board.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue().getNotation() + entry.getValue().getTeam());
+        }
     }
 
 
