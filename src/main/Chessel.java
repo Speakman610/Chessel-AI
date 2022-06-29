@@ -8,12 +8,12 @@ public class Chessel {
         System.out.println("Welcome to Chessel!");
         BoardState board = BoardState.getBoardState();
         board.setPossibleMoves();
-        String testPiece = "";
+        String notationStartsWith = "N";
         List<String> possibleMoves = board.getPossibleMoves('w');
 
         System.out.println("\nMOVES FOR WHITE: ");
         for (String move : possibleMoves) {
-            if (move.startsWith(testPiece)) {
+            if (move.startsWith(notationStartsWith)) {
                 System.out.println(move);
             }
         }
@@ -22,7 +22,7 @@ public class Chessel {
 
         System.out.println("\nMOVES FOR BLACK: ");
         for (String move : possibleMoves) {
-            if (move.startsWith(testPiece)) {
+            if (move.startsWith(notationStartsWith)) {
                 System.out.println(move);
             }
         }

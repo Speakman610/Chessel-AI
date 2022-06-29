@@ -7,6 +7,7 @@ import java.util.Map;
 
 import main.boardState.chessPieces.Bishop;
 import main.boardState.chessPieces.King;
+import main.boardState.chessPieces.Knight;
 import main.boardState.chessPieces.Piece;
 import main.boardState.chessPieces.Queen;
 import main.boardState.chessPieces.Rook;
@@ -26,22 +27,22 @@ public class BoardState implements BoardState_Interface {
 
         // WHITE TEAM
         board.put("a1", new Rook('w', 1, 1));
-        // Nb1
+        board.put("b1", new Knight('w', 2, 1));
         board.put("c1", new Bishop('w', 3, 1));
         board.put("d1", new Queen('w', 4, 1));
         board.put("e1", new King('w', 5, 1));
         board.put("f1", new Bishop('w', 6, 1));
-        // Ng1
+        board.put("g1", new Knight('w', 7, 1));
         board.put("h1", new Rook('w', 8, 1));
 
         // BLACK TEAM
         board.put("a8", new Rook('b', 1, 8));
-        // Nb8
+        board.put("b8", new Knight('b', 2, 8));
         board.put("c8", new Bishop('b', 3, 8));
         board.put("d8", new Queen('b', 4, 8));
         board.put("e8", new King('b', 5, 8));
         board.put("f8", new Bishop('b', 6, 8));
-        // Ng8
+        board.put("g8", new Knight('b', 7, 8));
         board.put("h8", new Rook('b', 8, 8));
 
         initializeAttackMaps();

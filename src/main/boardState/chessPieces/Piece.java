@@ -13,10 +13,12 @@ public abstract class Piece {
     protected List<String> possibleMoves;
     protected boolean hasMoved; // has this piece moved this game
 
-    Piece(char team, String notation) {
+    Piece(char team, String notation, int x_pos, int y_pos) {
         this.team = team;
         this.notation = notation;
         this.hasMoved = false;
+        this.x_pos = x_pos;
+        this.y_pos = y_pos;
     }
     
     public abstract void setPossibleMoves();

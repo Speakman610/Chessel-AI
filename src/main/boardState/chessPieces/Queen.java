@@ -8,11 +8,7 @@ public class Queen extends Piece {
     int range = 8;
 
     public Queen(char team, int x_pos, int y_pos) {
-        super(team, "Q");
-
-        // The starting position of the Queen is either d1 or d8
-        setX_pos(x_pos);
-        setY_pos(y_pos);
+        super(team, "Q", x_pos, y_pos);
     }
 
     @Override
