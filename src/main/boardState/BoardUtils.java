@@ -222,25 +222,25 @@ public class BoardUtils {
         List<String> knightMoves = new ArrayList<>();
 
         if (piece.canMoveRight() && piece.canMoveUp()) {
-            knightMoves.addAll(calculateKnightMoveForDirection(piece, Direction.POSITIVE, Direction.POSITIVE));
+            knightMoves.addAll(calculateKnightMovesForDirection(piece, Direction.POSITIVE, Direction.POSITIVE));
         }
 
         if (piece.canMoveRight() && piece.canMoveDown()) {
-            knightMoves.addAll(calculateKnightMoveForDirection(piece, Direction.POSITIVE, Direction.NEGATIVE));
+            knightMoves.addAll(calculateKnightMovesForDirection(piece, Direction.POSITIVE, Direction.NEGATIVE));
         }
 
         if (piece.canMoveLeft() && piece.canMoveUp()) {
-            knightMoves.addAll(calculateKnightMoveForDirection(piece, Direction.NEGATIVE, Direction.POSITIVE));
+            knightMoves.addAll(calculateKnightMovesForDirection(piece, Direction.NEGATIVE, Direction.POSITIVE));
         }
 
         if (piece.canMoveLeft() && piece.canMoveDown()) {
-            knightMoves.addAll(calculateKnightMoveForDirection(piece, Direction.NEGATIVE, Direction.NEGATIVE));
+            knightMoves.addAll(calculateKnightMovesForDirection(piece, Direction.NEGATIVE, Direction.NEGATIVE));
         }
 
         return knightMoves;
     }
 
-    private static List<String> calculateKnightMoveForDirection(Piece piece, Direction x_axis, Direction y_axis) {
+    private static List<String> calculateKnightMovesForDirection(Piece piece, Direction x_axis, Direction y_axis) {
         List<String> moveList = new ArrayList<>();
         Map<String, Piece> board = BoardState.getBoardState().getBoard();
 
@@ -280,6 +280,40 @@ public class BoardUtils {
         }
 
         return moveList;
+    }
+
+    public static List<String> getPawnMoves(Piece piece) {
+        List<String> pawnMoves = new ArrayList<>();
+        Map<String, Piece> board = BoardState.getBoardState().getBoard();
+
+        Direction direction = Direction.POSITIVE;
+        if (piece.getTeam() == 'b') direction = Direction.NEGATIVE;
+
+        int movementDirection = getSign(direction);
+
+        String inFrontOfPawn = convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (1 * movementDirection));
+        if (!board.containsKey(inFrontOfPawn)) {
+            pawnMoves.add(inFrontOfPawn);
+            String twoInFrontOfPawn = convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (2 * movementDirection));
+            if (!piece.hasMoved() && !board.containsKey(twoInFrontOfPawn)) {
+                pawnMoves.add(twoInFrontOfPawn);
+                // TODO: Allow "En Passant"
+            }
+        }
+
+        char currentFile = (char) (piece.getX_pos() + 96);
+        String forwardRightOfPawn = convertXYPosToNotation(piece.getX_pos() + 1, piece.getY_pos() + (1 * movementDirection));
+        String forwardLeftOfPawn = convertXYPosToNotation(piece.getX_pos() - 1, piece.getY_pos() + (1 * movementDirection));
+        if (board.containsKey(forwardRightOfPawn)) {
+            pawnMoves.add(currentFile + "x" + forwardRightOfPawn);
+            BoardState.getBoardState().addToAttackMap(piece.getTeam(), forwardRightOfPawn);
+        }
+        if (board.containsKey(forwardLeftOfPawn)) {
+            pawnMoves.add(currentFile + "x" + forwardLeftOfPawn);
+            BoardState.getBoardState().addToAttackMap(piece.getTeam(), forwardLeftOfPawn);
+        }
+
+        return pawnMoves;
     }
 
     private static int getSign(Direction direction) {

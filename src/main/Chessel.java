@@ -8,7 +8,7 @@ public class Chessel {
         System.out.println("Welcome to Chessel!");
         BoardState board = BoardState.getBoardState();
         board.setPossibleMoves();
-        String notationStartsWith = "N";
+        String notationStartsWith = "";
         List<String> possibleMoves = board.getPossibleMoves('w');
 
         System.out.println("\nMOVES FOR WHITE: ");
