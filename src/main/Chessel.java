@@ -8,7 +8,7 @@ public class Chessel {
         System.out.println("Welcome to Chessel!");
         BoardState board = BoardState.getBoardState();
         board.setPossibleMoves();
-        String testPiece = "O";
+        String testPiece = "";
         List<String> possibleMoves = board.getPossibleMoves('w');
 
         System.out.println("\nMOVES FOR WHITE: ");
@@ -27,7 +27,7 @@ public class Chessel {
             }
         }
 
-        System.out.println("\nCURRENT BOARD: ");
-        board.printCurrentBoard();
+        // System.out.println("\nCURRENT BOARD: ");
+        // board.printCurrentBoard();
     }
 }

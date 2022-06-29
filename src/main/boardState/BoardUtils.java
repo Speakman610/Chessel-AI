@@ -13,6 +13,10 @@ public class BoardUtils {
         ZERO,
         NEGATIVE
     }
+    enum CastlingSide {
+        QUEEN,
+        KING
+    }
 
     /*
      * NOTATION NOTES:
@@ -55,24 +59,28 @@ public class BoardUtils {
         return "" + xChar + yChar;
     }
 
-    public static boolean canCastle(char team) {
-        Map<String, Piece> board = BoardState.getBoardState().getBoard();
+    public static boolean notCastlingThroughCheck(char team, CastlingSide castlingSide) {
+        char[] x_positions;
 
-        boolean kingCanCastle = false;
-        boolean rookACanCastle = false;
-        boolean rookHCanCastle = false;
-        boolean queenSideClear = false;
-        boolean kingSideClear = false;
-
-        if (team == 'w') {
-            if (board.containsKey("e1")) kingCanCastle = !board.get("e1").hasMoved();
-            if (board.containsKey("a1")) rookACanCastle = !board.get("a1").hasMoved();
-            if (board.containsKey("h1")) rookHCanCastle = !board.get("h1").hasMoved();
-            queenSideClear = !(board.containsKey("d1") && board.containsKey("c1") && board.containsKey("b1"));
-            kingSideClear = !(board.containsKey("f1") && board.containsKey("g1"));
+        if (castlingSide == CastlingSide.QUEEN) {
+            x_positions = new char[] {'b', 'c', 'd'};
+        } else {
+            x_positions = new char[] {'f', 'g'};
         }
 
-        return kingCanCastle && ((rookACanCastle && queenSideClear) || (rookHCanCastle && kingSideClear));
+        if (team == 'w') {
+            Map<String, Integer> blackAttackMap = BoardState.getBoardState().getBlackAttackMap();
+            for (char x_pos : x_positions) {
+                if (blackAttackMap.get(x_pos + "1") > 0) return false;
+            }
+        } else {
+            Map<String, Integer> whiteAttackMap = BoardState.getBoardState().getWhiteAttackMap();
+            for (char x_pos : x_positions) {
+                if (whiteAttackMap.get(x_pos + "8") > 0) return false;
+            }
+        }
+
+        return true;
     }
 
     public static List<String> getCastling(char team) {
@@ -84,22 +92,25 @@ public class BoardUtils {
         boolean rookHCanCastle = false;
         boolean queenSideClear = false;
         boolean kingSideClear = false;
+        boolean notInCheck = false;
 
         if (team == 'w') {
             if (board.containsKey("e1")) kingCanCastle = !board.get("e1").hasMoved();
             if (board.containsKey("a1")) rookACanCastle = !board.get("a1").hasMoved();
             if (board.containsKey("h1")) rookHCanCastle = !board.get("h1").hasMoved();
-            queenSideClear = !(board.containsKey("d1") || board.containsKey("c1") || board.containsKey("b1"));
-            kingSideClear = !(board.containsKey("f1") || board.containsKey("g1"));
+            queenSideClear = !(board.containsKey("d1") || board.containsKey("c1") || board.containsKey("b1")) && notCastlingThroughCheck(team, CastlingSide.QUEEN);
+            kingSideClear = !(board.containsKey("f1") || board.containsKey("g1")) && notCastlingThroughCheck(team, CastlingSide.KING);
+            notInCheck = !BoardState.getBoardState().whiteInCheck();
         } else {
             if (board.containsKey("e8")) kingCanCastle = !board.get("e8").hasMoved();
             if (board.containsKey("a8")) rookACanCastle = !board.get("a8").hasMoved();
             if (board.containsKey("h8")) rookHCanCastle = !board.get("h8").hasMoved();
-            queenSideClear = !(board.containsKey("d8") || board.containsKey("c8") || board.containsKey("b8"));
-            kingSideClear = !(board.containsKey("f8") || board.containsKey("g8"));
+            queenSideClear = !(board.containsKey("d8") || board.containsKey("c8") || board.containsKey("b8")) && notCastlingThroughCheck(team, CastlingSide.QUEEN);
+            kingSideClear = !(board.containsKey("f8") || board.containsKey("g8")) && notCastlingThroughCheck(team, CastlingSide.KING);
+            notInCheck = !BoardState.getBoardState().blackInCheck();
         }
 
-        if (kingCanCastle) {
+        if (kingCanCastle && notInCheck) {
             if (rookACanCastle && queenSideClear) castlingOptions.add("O-O-O");
             if (rookHCanCastle && kingSideClear) castlingOptions.add("O-O");
         }
@@ -193,9 +204,11 @@ public class BoardUtils {
                     if (board.get(notationCoord).getTeam() != piece.getTeam()) {
                         directionalMoves.add(piece.getNotation() + "x" + notationCoord);
                     }
+                    BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
                     break;
                 } else {
                     directionalMoves.add(piece.getNotation() + notationCoord);
+                    BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
                 }
             } else {
                 break;

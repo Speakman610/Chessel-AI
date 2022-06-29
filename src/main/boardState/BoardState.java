@@ -16,6 +16,8 @@ public class BoardState implements BoardState_Interface {
     private Map<String, Piece> board;
     private Map<String, Integer> whiteAttackMap;
     private Map<String, Integer> blackAttackMap;
+    private boolean inCheckWhite;
+    private boolean inCheckBlack;
     private char turn; // the current turn in the game
 
     private BoardState() {
@@ -42,6 +44,9 @@ public class BoardState implements BoardState_Interface {
         // Ng8
         board.put("h8", new Rook('b', 8, 8));
 
+        initializeAttackMaps();
+        inCheckWhite = false;
+        inCheckBlack = false;
         turn = 'w';
     }
 
@@ -81,7 +86,9 @@ public class BoardState implements BoardState_Interface {
         } else {
             setTurn('w');
         }
-        
+
+        // TODO: Check to see if either side is in check or checkmate after each move
+
         return false;
     }
 
@@ -92,9 +99,16 @@ public class BoardState implements BoardState_Interface {
         }
     }
 
-    // private void initializeAttackMaps() {
-    //     for (int i = 0; i < )
-    // }
+    private void initializeAttackMaps() {
+        blackAttackMap = new HashMap<>();
+        whiteAttackMap = new HashMap<>();
+        for (int i = 1; i <= 8; i++) {
+            for (int j = 1; j <= 8; j++) {
+                blackAttackMap.put(BoardUtils.convertXYPosToNotation(i, j), 0);
+                whiteAttackMap.put(BoardUtils.convertXYPosToNotation(i, j), 0);
+            }
+        }
+    }
 
     public Map<String,Piece> getBoard() {
         return this.board;
@@ -108,5 +122,44 @@ public class BoardState implements BoardState_Interface {
         this.turn = turn;
     }
 
-    
+    public boolean whiteInCheck() {
+        return inCheckWhite;
+    }
+
+    public boolean blackInCheck() {
+        return inCheckBlack;
+    }
+
+    public void addToAttackMap(char team, String notationCoord) {
+        if (team == 'w') {
+            int attackingCount = whiteAttackMap.get(notationCoord);
+            attackingCount += 1;
+            whiteAttackMap.put(notationCoord, attackingCount);
+        } else {
+            int attackingCount = blackAttackMap.get(notationCoord);
+            attackingCount += 1;
+            blackAttackMap.put(notationCoord, attackingCount);
+        }
+    }
+
+    public void subtractFromAttackMap(char team, String notationCoord) {
+        if (team == 'w') {
+            int attackingCount = whiteAttackMap.get(notationCoord);
+            attackingCount -= 1;
+            whiteAttackMap.put(notationCoord, attackingCount);
+        } else {
+            int attackingCount = blackAttackMap.get(notationCoord);
+            attackingCount -= 1;
+            blackAttackMap.put(notationCoord, attackingCount);
+        }
+    }
+
+    public Map<String, Integer> getWhiteAttackMap() {
+        return whiteAttackMap;
+    }
+
+    public Map<String, Integer> getBlackAttackMap() {
+        return blackAttackMap;
+    }
+
 }
