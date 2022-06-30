@@ -169,31 +169,6 @@ public class BoardUtils {
         int horizontalInt = getSign(x_axis);
         int verticalInt = getSign(y_axis);
 
-        // switch (x_axis) {
-        //     case POSITIVE:
-        //         horizontalInt = 1;
-        //         break;
-        //     case NEGATIVE:
-        //         horizontalInt = -1;
-        //         break;
-        //     default:
-        //         horizontalInt = 0;
-        //         break;
-        // }
-
-        // switch (y_axis) {
-        //     case POSITIVE:
-        //         verticalInt = 1;
-        //         break;
-        //     case NEGATIVE:
-        //         verticalInt = -1;
-        //         break;
-        //     default:
-        //         verticalInt = 0;
-        //         break;
-        // }
-
-
         for (int i = 1; i <= range; i++) {
             if (piece.getX_pos() + (i * horizontalInt) <= 8 &&
                     piece.getX_pos() + (i * horizontalInt) >= 1 &&
@@ -202,12 +177,16 @@ public class BoardUtils {
                 String notationCoord = convertXYPosToNotation(piece.getX_pos() + (i * horizontalInt), piece.getY_pos() + (i * verticalInt));
                 if (board.containsKey(notationCoord)) {
                     if (board.get(notationCoord).getTeam() != piece.getTeam()) {
-                        directionalMoves.add(piece.getNotation() + "x" + notationCoord);
-                        BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
+                        if (!kingMovingIntoCheck(piece, notationCoord)) {
+                            directionalMoves.add(piece.getNotation() + "x" + notationCoord);
+                        }
                     }
+                    BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
                     break;
                 } else {
-                    directionalMoves.add(piece.getNotation() + notationCoord);
+                    if (!kingMovingIntoCheck(piece, notationCoord)) {
+                        directionalMoves.add(piece.getNotation() + notationCoord);
+                    }
                     BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
                 }
             } else {
@@ -216,6 +195,15 @@ public class BoardUtils {
         }
 
         return directionalMoves;
+    }
+
+    private static boolean kingMovingIntoCheck(Piece piece, String notation) {
+        if (piece.getNotation() != "K") return false;
+        if (piece.getTeam() == 'w') {
+            return BoardState.getBoardState().getBlackAttackMap().get(notation) > 0;
+        } else {
+            return BoardState.getBoardState().getWhiteAttackMap().get(notation) > 0;
+        }
     }
 
     public static List<String> getKnightMoves(Piece piece) {
@@ -255,12 +243,11 @@ public class BoardUtils {
             if (board.containsKey(notationCoord)) {
                 if (board.get(notationCoord).getTeam() != piece.getTeam()) {
                     moveList.add(piece.getNotation() + "x" + notationCoord);
-                    BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
                 }
             } else {
                 moveList.add(piece.getNotation() + notationCoord);
-                BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
             }
+            BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
         }
 
         if (piece.getX_pos() + (1 * x_direction) <= 8 &&
@@ -271,12 +258,11 @@ public class BoardUtils {
             if (board.containsKey(notationCoord)) {
                 if (board.get(notationCoord).getTeam() != piece.getTeam()) {
                     moveList.add(piece.getNotation() + "x" + notationCoord);
-                    BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
                 }
             } else {
                 moveList.add(piece.getNotation() + notationCoord);
-                BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
             }
+            BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
         }
 
         return moveList;
@@ -305,11 +291,15 @@ public class BoardUtils {
         String forwardRightOfPawn = convertXYPosToNotation(piece.getX_pos() + 1, piece.getY_pos() + (1 * movementDirection));
         String forwardLeftOfPawn = convertXYPosToNotation(piece.getX_pos() - 1, piece.getY_pos() + (1 * movementDirection));
         if (board.containsKey(forwardRightOfPawn)) {
-            pawnMoves.add(currentFile + "x" + forwardRightOfPawn);
+            if (board.get(forwardRightOfPawn).getTeam() != piece.getTeam()) {
+                pawnMoves.add(currentFile + "x" + forwardRightOfPawn);
+            }
             BoardState.getBoardState().addToAttackMap(piece.getTeam(), forwardRightOfPawn);
         }
         if (board.containsKey(forwardLeftOfPawn)) {
-            pawnMoves.add(currentFile + "x" + forwardLeftOfPawn);
+            if (board.get(forwardLeftOfPawn).getTeam() != piece.getTeam()) {
+                pawnMoves.add(currentFile + "x" + forwardLeftOfPawn);
+            }
             BoardState.getBoardState().addToAttackMap(piece.getTeam(), forwardLeftOfPawn);
         }
 

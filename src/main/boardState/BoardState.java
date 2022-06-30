@@ -27,33 +27,33 @@ public class BoardState implements BoardState_Interface {
         board = new HashMap<>();
 
         // WHITE TEAM
-        board.put("a2", new Pawn('w', 1, 2));
-        board.put("b2", new Pawn('w', 2, 2));
-        board.put("c2", new Pawn('w', 3, 2));
-        board.put("d2", new Pawn('w', 4, 2));
-        board.put("e2", new Pawn('w', 5, 2));
-        board.put("f2", new Pawn('w', 6, 2));
-        board.put("g2", new Pawn('w', 7, 2));
-        board.put("h2", new Pawn('w', 8, 2));
+        // board.put("a2", new Pawn('w', 1, 2));
+        // board.put("b2", new Pawn('w', 2, 2));
+        // board.put("c2", new Pawn('w', 3, 2));
+        // board.put("d2", new Pawn('w', 4, 2));
+        // board.put("e2", new Pawn('w', 5, 2));
+        // board.put("f2", new Pawn('w', 6, 2));
+        // board.put("g2", new Pawn('w', 7, 2));
+        // board.put("h2", new Pawn('w', 8, 2));
 
         board.put("a1", new Rook('w', 1, 1));
-        board.put("b1", new Knight('w', 2, 1));
-        board.put("c1", new Bishop('w', 3, 1));
-        board.put("d1", new Queen('w', 4, 1));
+        // board.put("b1", new Knight('w', 2, 1));
+        // board.put("c1", new Bishop('w', 3, 1));
+        // board.put("d1", new Queen('w', 4, 1));
         board.put("e1", new King('w', 5, 1));
         board.put("f1", new Bishop('w', 6, 1));
         board.put("g1", new Knight('w', 7, 1));
         board.put("h1", new Rook('w', 8, 1));
 
         // BLACK TEAM
-        board.put("a7", new Pawn('b', 1, 7));
-        board.put("b7", new Pawn('b', 2, 7));
-        board.put("c7", new Pawn('b', 3, 7));
-        board.put("d7", new Pawn('b', 4, 7));
-        board.put("e7", new Pawn('b', 5, 7));
-        board.put("f7", new Pawn('b', 6, 7));
-        board.put("g7", new Pawn('b', 7, 7));
-        board.put("h7", new Pawn('b', 8, 7));
+        // board.put("a7", new Pawn('b', 1, 7));
+        // board.put("b7", new Pawn('b', 2, 7));
+        // board.put("c7", new Pawn('b', 3, 7));
+        // board.put("d7", new Pawn('b', 4, 7));
+        // board.put("e7", new Pawn('b', 5, 7));
+        // board.put("f7", new Pawn('b', 6, 7));
+        // board.put("g7", new Pawn('b', 7, 7));
+        // board.put("h7", new Pawn('b', 8, 7));
 
         board.put("a8", new Rook('b', 1, 8));
         board.put("b8", new Knight('b', 2, 8));
@@ -94,6 +94,9 @@ public class BoardState implements BoardState_Interface {
     }
 
     public void setPossibleMoves() {
+        for (Map.Entry<String, Piece> entry : board.entrySet()) {
+            entry.getValue().setPossibleMoves();
+        }
         for (Map.Entry<String, Piece> entry : board.entrySet()) {
             entry.getValue().setPossibleMoves();
         }
