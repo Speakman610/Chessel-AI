@@ -19,7 +19,7 @@ public class Chessel {
         }
 
         System.out.println("");
-        board.makeMove("a4");
+        // board.makeMove("a4");
 
         // possibleMoves = board.getPossibleMoves('b');
 

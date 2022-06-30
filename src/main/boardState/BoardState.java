@@ -193,11 +193,14 @@ public class BoardState implements BoardState_Interface {
                 if (piece == null) {
                     boardPrint += fill;
                 } else {
+                    String pieceNotation;
                     if (piece.getNotation() == "") {
-                        boardPrint += "P";
+                        pieceNotation = "P";
                     } else {
-                        boardPrint += piece.getNotation();
+                        pieceNotation = piece.getNotation();
                     }
+                    if (piece.getTeam() == 'b') pieceNotation = pieceNotation.toLowerCase();
+                    boardPrint += pieceNotation;
                 }
                 boardPrint += fill + "|";
             }
