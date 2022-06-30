@@ -15,8 +15,6 @@ public class King extends Piece {
     public void setPossibleMoves() {
         this.possibleMoves = new ArrayList<>();
 
-        // TODO: Remove ability to move into check (not talking about castling)
-
         this.possibleMoves.addAll(BoardUtils.getDiagonalMoves(this, range));
         this.possibleMoves.addAll(BoardUtils.getAdjacentMoves(this, range));
     }

@@ -12,6 +12,8 @@ import main.boardState.chessPieces.Pawn;
 import main.boardState.chessPieces.Piece;
 import main.boardState.chessPieces.Queen;
 import main.boardState.chessPieces.Rook;
+import main.exceptions.InternalApplicationException;
+import main.exceptions.InvalidMoveException;
 
 public class BoardState implements BoardState_Interface {
     private static BoardState boardState = null; // instance of the board state to create a singleton class
@@ -27,33 +29,33 @@ public class BoardState implements BoardState_Interface {
         board = new HashMap<>();
 
         // WHITE TEAM
-        // board.put("a2", new Pawn('w', 1, 2));
-        // board.put("b2", new Pawn('w', 2, 2));
-        // board.put("c2", new Pawn('w', 3, 2));
-        // board.put("d2", new Pawn('w', 4, 2));
-        // board.put("e2", new Pawn('w', 5, 2));
-        // board.put("f2", new Pawn('w', 6, 2));
-        // board.put("g2", new Pawn('w', 7, 2));
-        // board.put("h2", new Pawn('w', 8, 2));
+        board.put("a2", new Pawn('w', 1, 2));
+        board.put("b2", new Pawn('w', 2, 2));
+        board.put("c2", new Pawn('w', 3, 2));
+        board.put("d2", new Pawn('w', 4, 2));
+        board.put("e2", new Pawn('w', 5, 2));
+        board.put("f2", new Pawn('w', 6, 2));
+        board.put("g2", new Pawn('w', 7, 2));
+        board.put("h2", new Pawn('w', 8, 2));
 
         board.put("a1", new Rook('w', 1, 1));
-        // board.put("b1", new Knight('w', 2, 1));
-        // board.put("c1", new Bishop('w', 3, 1));
-        // board.put("d1", new Queen('w', 4, 1));
+        board.put("b1", new Knight('w', 2, 1));
+        board.put("c1", new Bishop('w', 3, 1));
+        board.put("d1", new Queen('w', 4, 1));
         board.put("e1", new King('w', 5, 1));
         board.put("f1", new Bishop('w', 6, 1));
         board.put("g1", new Knight('w', 7, 1));
         board.put("h1", new Rook('w', 8, 1));
 
         // BLACK TEAM
-        // board.put("a7", new Pawn('b', 1, 7));
-        // board.put("b7", new Pawn('b', 2, 7));
-        // board.put("c7", new Pawn('b', 3, 7));
-        // board.put("d7", new Pawn('b', 4, 7));
-        // board.put("e7", new Pawn('b', 5, 7));
-        // board.put("f7", new Pawn('b', 6, 7));
-        // board.put("g7", new Pawn('b', 7, 7));
-        // board.put("h7", new Pawn('b', 8, 7));
+        board.put("a7", new Pawn('b', 1, 7));
+        board.put("b7", new Pawn('b', 2, 7));
+        board.put("c7", new Pawn('b', 3, 7));
+        board.put("d7", new Pawn('b', 4, 7));
+        board.put("e7", new Pawn('b', 5, 7));
+        board.put("f7", new Pawn('b', 6, 7));
+        board.put("g7", new Pawn('b', 7, 7));
+        board.put("h7", new Pawn('b', 8, 7));
 
         board.put("a8", new Rook('b', 1, 8));
         board.put("b8", new Knight('b', 2, 8));
@@ -97,22 +99,76 @@ public class BoardState implements BoardState_Interface {
         for (Map.Entry<String, Piece> entry : board.entrySet()) {
             entry.getValue().setPossibleMoves();
         }
-        for (Map.Entry<String, Piece> entry : board.entrySet()) {
-            entry.getValue().setPossibleMoves();
+        
+        /*
+         * After all of the pieces have determined their
+         * possible moves, recalculate moves for the
+         * kings to take into account attack maps
+         */
+        for (Piece piece : board.values()) {
+            if (piece.getNotation() == "K") {
+                piece.setPossibleMoves();
+                int x_pos = piece.getX_pos();
+                int y_pos = piece.getY_pos();
+                String location = BoardUtils.convertXYPosToNotation(x_pos, y_pos);
+                if (whiteAttackMap.get(location) > 0) {
+                    inCheckWhite = true;
+                } else {
+                    inCheckWhite = false;
+                }
+
+                if (blackAttackMap.get(location) > 0) {
+                    inCheckBlack = true;
+                } else {
+                    inCheckBlack = false;
+                }
+            }
         }
     }
 
     @Override
-    public boolean makeMove(String notation) {
-        if (turn == 'w') {
-            setTurn('b');
-        } else {
-            setTurn('w');
+    public void makeMove(String inputMove) throws InvalidMoveException, InternalApplicationException {
+        if (!getPossibleMoves(turn).contains(inputMove)) throw new InvalidMoveException("The move " + inputMove + " is not a valid move.");
+
+        String notationCoords = "";
+        String pieceNotation = "";
+        Piece pieceToMove = null;
+        
+        for (int i = 0; i < inputMove.length(); i++) {
+            char c = inputMove.charAt(i);
+            // 1 -> 49, 8 -> 56
+            if (c >= 49 && c <= 56) {
+                notationCoords = inputMove.charAt(i - 1) + "" + c;
+                pieceNotation = inputMove.substring(0, i - 1);
+                if (pieceNotation.length() > 1) {
+                    pieceNotation = pieceNotation.substring(0, 1);
+                }
+            }
         }
 
-        // TODO: Check to see if either side is in check or checkmate after each move
+        for (Piece piece : board.values()) {
+            if (piece.getNotation() == pieceNotation &&
+                    piece.getTeam() == turn &&
+                    piece.getPossibleMoves().contains(inputMove)) {
+                pieceToMove = piece;
+                break;
+            }
+        }
 
-        return false;
+        if (pieceToMove == null) throw new InternalApplicationException("Unable to make move due to an internal error");
+        int[] xy_pos = BoardUtils.convertNotationCoordToXYCoord(notationCoords);
+        board.remove(BoardUtils.convertXYPosToNotation(pieceToMove.getX_pos(), pieceToMove.getY_pos()));
+        pieceToMove.movePiece(xy_pos[0], xy_pos[1]);
+        board.put(notationCoords, pieceToMove);
+
+        toggleTurn();
+        setPossibleMoves();
+
+        System.out.println("Notation Coords: " + notationCoords);
+        System.out.println("Piece Notation: " + pieceNotation);
+
+        // TODO: Finish makeMove()
+        // TODO: Check to see if either side is in check or checkmate after each move
     }
 
     @Override
@@ -143,6 +199,14 @@ public class BoardState implements BoardState_Interface {
 
     private void setTurn(char turn) {
         this.turn = turn;
+    }
+
+    private void toggleTurn() {
+        if (turn == 'w') {
+            setTurn('b');
+        } else {
+            setTurn('w');
+        }
     }
 
     public boolean whiteInCheck() {

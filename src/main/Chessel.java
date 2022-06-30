@@ -8,7 +8,7 @@ public class Chessel {
         System.out.println("Welcome to Chessel!");
         BoardState board = BoardState.getBoardState();
         board.setPossibleMoves();
-        String notationStartsWith = "K";
+        String notationStartsWith = "";
         List<String> possibleMoves = board.getPossibleMoves('w');
 
         System.out.println("\nMOVES FOR WHITE: ");
@@ -18,16 +18,25 @@ public class Chessel {
             }
         }
 
-        possibleMoves = board.getPossibleMoves('b');
+        System.out.println("");
+        board.makeMove("a4");
 
-        System.out.println("\nMOVES FOR BLACK: ");
-        for (String move : possibleMoves) {
-            if (move.startsWith(notationStartsWith)) {
-                System.out.println(move);
-            }
-        }
+        // possibleMoves = board.getPossibleMoves('b');
 
-        // System.out.println("\nCURRENT BOARD: ");
-        // board.printCurrentBoard();
+        // System.out.println("\nMOVES FOR BLACK: ");
+        // for (String move : possibleMoves) {
+        //     if (move.startsWith(notationStartsWith)) {
+        //         System.out.println(move);
+        //     }
+        // }
+
+        // System.out.println("");
+        // board.makeMove("a4");
+
+        // System.out.println("");
+        // board.makeMove("Nc3");
+
+        System.out.println("\nCURRENT BOARD: ");
+        board.printCurrentBoard();
     }
 }

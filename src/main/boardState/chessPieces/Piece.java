@@ -34,9 +34,11 @@ public abstract class Piece {
         //     }
         // }
 
+        // TODO: Make sure that a piece can't move if it will cause its king to be in check
+
         this.x_pos = x_pos;
         this.y_pos = y_pos;
-        this.setPossibleMoves();
+        // this.setPossibleMoves();
         hasMoved = true;
 
         // throw new InvalidMoveException("The move " + notation + inputMove + " is not a valid move.");
