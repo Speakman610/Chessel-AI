@@ -17,10 +17,6 @@ public class BoardUtils {
         QUEEN,
         KING
     }
-    public enum Team {
-        WHITE,
-        BLACK
-    }
 
     /*
      * NOTATION NOTES:

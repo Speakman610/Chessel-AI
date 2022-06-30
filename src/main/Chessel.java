@@ -33,10 +33,9 @@ public class Chessel {
         // System.out.println("");
         // board.makeMove("a4");
 
-        // System.out.println("");
+        System.out.println("");
         // board.makeMove("Nc3");
 
-        System.out.println("\nCURRENT BOARD: ");
         board.printCurrentBoard();
     }
 }

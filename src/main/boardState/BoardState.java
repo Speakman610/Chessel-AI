@@ -173,9 +173,38 @@ public class BoardState implements BoardState_Interface {
 
     @Override
     public void printCurrentBoard() {
-        for (Map.Entry<String, Piece> entry : board.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue().getNotation() + entry.getValue().getTeam());
+        // for (Map.Entry<String, Piece> entry : board.entrySet()) {
+        //     System.out.println(entry.getKey() + ": " + entry.getValue().getNotation() + entry.getValue().getTeam());
+        // }
+
+        String boardPrint = "       ----==| CHESSEL |==----\n\n";
+        boardPrint += "  |---|---|---|---|---|---|---|---|\n";
+        for (int y = 8; y >= 1; y--) {
+            boardPrint += y + " |";
+            for (int x = 1; x <= 8; x++) {
+                boolean squareIsBlack = ((x + y) % 2) == 0;
+                String fill = " ";
+                if (squareIsBlack) {
+                    fill = "|";
+                }
+                boardPrint += fill;
+                String location = BoardUtils.convertXYPosToNotation(x, y);
+                Piece piece = board.get(location);
+                if (piece == null) {
+                    boardPrint += fill;
+                } else {
+                    if (piece.getNotation() == "") {
+                        boardPrint += "P";
+                    } else {
+                        boardPrint += piece.getNotation();
+                    }
+                }
+                boardPrint += fill + "|";
+            }
+            boardPrint += "\n  |---|---|---|---|---|---|---|---|\n";
         }
+        boardPrint += "    a   b   c   d   e   f   g   h\n";
+        System.out.println(boardPrint);
     }
 
     private void initializeAttackMaps() {
