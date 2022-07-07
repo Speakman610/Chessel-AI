@@ -2,7 +2,6 @@ package main.boardState.chessPieces;
 
 import java.util.List;
 
-import main.boardState.BoardUtils;
 import main.exceptions.InvalidMoveException;
 
 public abstract class Piece {
@@ -24,15 +23,6 @@ public abstract class Piece {
     public abstract void setPossibleMoves();
 
     public void movePiece(int x_pos, int y_pos) throws InvalidMoveException {
-        // String inputMove = notation + BoardUtils.convertXYPosToNotation(x_pos, y_pos);
-        // for (String possibleMove : getPossibleMoves()) {
-        //     if(inputMove.equals(possibleMove)) {
-        //         this.x_pos = x_pos;
-        //         this.y_pos = y_pos;
-        //         this.setPossibleMoves();
-        //         hasMoved = true;
-        //     }
-        // }
 
         // TODO: Make sure that a piece can't move if it will cause its king to be in check
 
@@ -40,8 +30,6 @@ public abstract class Piece {
         this.y_pos = y_pos;
         // this.setPossibleMoves();
         hasMoved = true;
-
-        // throw new InvalidMoveException("The move " + notation + inputMove + " is not a valid move.");
     }
 
     public boolean hasMoved() {
@@ -62,10 +50,6 @@ public abstract class Piece {
 
     public boolean canMoveDown() { // Down is vertical in the negative direction
         return getY_pos() - 1 >= 1;
-    }
-
-    public void printLocation() {
-        System.out.println(BoardUtils.convertXYPosToNotation(this.x_pos, this.y_pos));
     }
 
     public char getTeam() {
@@ -102,6 +86,10 @@ public abstract class Piece {
 
     public List<String> getPossibleMoves() {
         return this.possibleMoves;
+    }
+
+    public void setPossibleMoves(List<String> moves) {
+        this.possibleMoves = moves;
     }
 
 }

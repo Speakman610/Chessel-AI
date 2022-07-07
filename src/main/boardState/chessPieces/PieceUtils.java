@@ -1,13 +1,13 @@
-package main.boardState;
+package main.boardState.chessPieces;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import main.boardState.chessPieces.Piece;
+import main.ChesselUtils;
+import main.boardState.BoardState;
 
-public class BoardUtils {
+public class PieceUtils {
     enum Direction {
         POSITIVE,
         ZERO,
@@ -40,24 +40,24 @@ public class BoardUtils {
      * e.p. - En Passant (exf6 e.p.)
      */
 
-    // Only accepts the location (i.e. a3, e4, etc.), not the piece moving or any extra notation
-    public static int[] convertNotationCoordToXYCoord(String notation) {
-        if (notation.length() != 2) throw new InvalidParameterException("Cannot convert notation: Notation expected to be of length 2 but was actually of length " + notation.length());
-        char xChar = notation.charAt(0);
-        char yChar = notation.charAt(1);
+    // // Only accepts the location (i.e. a3, e4, etc.), not the piece moving or any extra notation
+    // public static int[] convertNotationCoordToXYCoord(String notation) {
+    //     if (notation.length() != 2) throw new InvalidParameterException("Cannot convert notation: Notation expected to be of length 2 but was actually of length " + notation.length());
+    //     char xChar = notation.charAt(0);
+    //     char yChar = notation.charAt(1);
 
-        int x_pos = (int) (xChar - 96);
-        int y_pos = (int) (yChar - 48);
+    //     int x_pos = (int) (xChar - 96);
+    //     int y_pos = (int) (yChar - 48);
 
-        return new int[] {x_pos, y_pos};
-    }
+    //     return new int[] {x_pos, y_pos};
+    // }
 
-    public static String convertXYPosToNotation(int x_pos, int y_pos) {
-        char xChar = (char) (x_pos + 96);
-        char yChar = (char) (y_pos + 48);
+    // public static String convertXYPosToNotation(int x_pos, int y_pos) {
+    //     char xChar = (char) (x_pos + 96);
+    //     char yChar = (char) (y_pos + 48);
         
-        return "" + xChar + yChar;
-    }
+    //     return "" + xChar + yChar;
+    // }
 
     public static boolean notCastlingThroughCheck(char team, CastlingSide castlingSide) {
         char[] x_positions;
@@ -93,20 +93,19 @@ public class BoardUtils {
         boolean queenSideClear = false;
         boolean kingSideClear = false;
         boolean notInCheck = false;
+        int rowToCheck = 1;
+
+        if (team == 'b') rowToCheck = 8;
+
+        if (board.containsKey("e" + rowToCheck)) kingCanCastle = !board.get("e" + rowToCheck).hasMoved();
+        if (board.containsKey("a" + rowToCheck)) rookACanCastle = !board.get("a" + rowToCheck).hasMoved();
+        if (board.containsKey("h" + rowToCheck)) rookHCanCastle = !board.get("h" + rowToCheck).hasMoved();
+        queenSideClear = !(board.containsKey("d" + rowToCheck) || board.containsKey("c" + rowToCheck) || board.containsKey("b" + rowToCheck)) && notCastlingThroughCheck(team, CastlingSide.QUEEN);
+        kingSideClear = !(board.containsKey("f" + rowToCheck) || board.containsKey("g" + rowToCheck)) && notCastlingThroughCheck(team, CastlingSide.KING);
 
         if (team == 'w') {
-            if (board.containsKey("e1")) kingCanCastle = !board.get("e1").hasMoved();
-            if (board.containsKey("a1")) rookACanCastle = !board.get("a1").hasMoved();
-            if (board.containsKey("h1")) rookHCanCastle = !board.get("h1").hasMoved();
-            queenSideClear = !(board.containsKey("d1") || board.containsKey("c1") || board.containsKey("b1")) && notCastlingThroughCheck(team, CastlingSide.QUEEN);
-            kingSideClear = !(board.containsKey("f1") || board.containsKey("g1")) && notCastlingThroughCheck(team, CastlingSide.KING);
             notInCheck = !BoardState.getBoardState().whiteInCheck();
         } else {
-            if (board.containsKey("e8")) kingCanCastle = !board.get("e8").hasMoved();
-            if (board.containsKey("a8")) rookACanCastle = !board.get("a8").hasMoved();
-            if (board.containsKey("h8")) rookHCanCastle = !board.get("h8").hasMoved();
-            queenSideClear = !(board.containsKey("d8") || board.containsKey("c8") || board.containsKey("b8")) && notCastlingThroughCheck(team, CastlingSide.QUEEN);
-            kingSideClear = !(board.containsKey("f8") || board.containsKey("g8")) && notCastlingThroughCheck(team, CastlingSide.KING);
             notInCheck = !BoardState.getBoardState().blackInCheck();
         }
 
@@ -174,21 +173,17 @@ public class BoardUtils {
                     piece.getX_pos() + (i * horizontalInt) >= 1 &&
                     piece.getY_pos() + (i * verticalInt) <= 8 && 
                     piece.getY_pos() + (i * verticalInt) >= 1) {
-                String notationCoord = convertXYPosToNotation(piece.getX_pos() + (i * horizontalInt), piece.getY_pos() + (i * verticalInt));
+                String notationCoord = ChesselUtils.convertXYPosToNotation(piece.getX_pos() + (i * horizontalInt), piece.getY_pos() + (i * verticalInt));
+
                 if (board.containsKey(notationCoord)) {
-                    if (board.get(notationCoord).getTeam() != piece.getTeam()) {
-                        if (!kingMovingIntoCheck(piece, notationCoord)) {
-                            directionalMoves.add(piece.getNotation() + "x" + notationCoord);
-                        }
-                    }
-                    BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
+                    directionalMoves.add(piece.getNotation() + notationCoord);
                     break;
-                } else {
-                    if (!kingMovingIntoCheck(piece, notationCoord)) {
-                        directionalMoves.add(piece.getNotation() + notationCoord);
-                    }
-                    BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
-                }
+                }// else {
+                //     if (!kingMovingIntoCheck(piece, notationCoord)) {
+                //         directionalMoves.add(piece.getNotation() + notationCoord);
+                //     }
+                //     BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
+                // }
             } else {
                 break;
             }
@@ -230,7 +225,7 @@ public class BoardUtils {
 
     private static List<String> calculateKnightMovesForDirection(Piece piece, Direction x_axis, Direction y_axis) {
         List<String> moveList = new ArrayList<>();
-        Map<String, Piece> board = BoardState.getBoardState().getBoard();
+        // Map<String, Piece> board = BoardState.getBoardState().getBoard();
 
         int x_direction = getSign(x_axis);
         int y_direction = getSign(y_axis);
@@ -239,30 +234,34 @@ public class BoardUtils {
                 piece.getX_pos() + (2 * x_direction) >= 1 &&
                 piece.getY_pos() + (1 * y_direction) <= 8 && 
                 piece.getY_pos() + (1 * y_direction) >= 1) {
-            String notationCoord = convertXYPosToNotation(piece.getX_pos() + (2 * x_direction), piece.getY_pos() + (1 * y_direction));
-            if (board.containsKey(notationCoord)) {
-                if (board.get(notationCoord).getTeam() != piece.getTeam()) {
-                    moveList.add(piece.getNotation() + "x" + notationCoord);
-                }
-            } else {
-                moveList.add(piece.getNotation() + notationCoord);
-            }
-            BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
+            String notationCoord = ChesselUtils.convertXYPosToNotation(piece.getX_pos() + (2 * x_direction), piece.getY_pos() + (1 * y_direction));
+            moveList.add(piece.getNotation() + notationCoord);
+
+            // if (board.containsKey(notationCoord)) {
+            //     if (board.get(notationCoord).getTeam() != piece.getTeam()) {
+            //         moveList.add(piece.getNotation() + "x" + notationCoord);
+            //     }
+            // } else {
+            //     moveList.add(piece.getNotation() + notationCoord);
+            // }
+            // BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
         }
 
         if (piece.getX_pos() + (1 * x_direction) <= 8 &&
                 piece.getX_pos() + (1 * x_direction) >= 1 &&
                 piece.getY_pos() + (2 * y_direction) <= 8 && 
                 piece.getY_pos() + (2 * y_direction) >= 1) {
-            String notationCoord = convertXYPosToNotation(piece.getX_pos() + (1 * x_direction), piece.getY_pos() + (2 * y_direction));
-            if (board.containsKey(notationCoord)) {
-                if (board.get(notationCoord).getTeam() != piece.getTeam()) {
-                    moveList.add(piece.getNotation() + "x" + notationCoord);
-                }
-            } else {
-                moveList.add(piece.getNotation() + notationCoord);
-            }
-            BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
+            String notationCoord = ChesselUtils.convertXYPosToNotation(piece.getX_pos() + (1 * x_direction), piece.getY_pos() + (2 * y_direction));
+            moveList.add(piece.getNotation() + notationCoord);
+
+            // if (board.containsKey(notationCoord)) {
+            //     if (board.get(notationCoord).getTeam() != piece.getTeam()) {
+            //         moveList.add(piece.getNotation() + "x" + notationCoord);
+            //     }
+            // } else {
+            //     moveList.add(piece.getNotation() + notationCoord);
+            // }
+            // BoardState.getBoardState().addToAttackMap(piece.getTeam(), notationCoord);
         }
 
         return moveList;
@@ -270,38 +269,44 @@ public class BoardUtils {
 
     public static List<String> getPawnMoves(Piece piece) {
         List<String> pawnMoves = new ArrayList<>();
-        Map<String, Piece> board = BoardState.getBoardState().getBoard();
+        // Map<String, Piece> board = BoardState.getBoardState().getBoard();
 
         Direction direction = Direction.POSITIVE;
         if (piece.getTeam() == 'b') direction = Direction.NEGATIVE;
 
         int movementDirection = getSign(direction);
 
-        String inFrontOfPawn = convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (1 * movementDirection));
-        if (!board.containsKey(inFrontOfPawn)) {
-            pawnMoves.add(inFrontOfPawn);
-            String twoInFrontOfPawn = convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (2 * movementDirection));
-            if (!piece.hasMoved() && !board.containsKey(twoInFrontOfPawn)) {
-                pawnMoves.add(twoInFrontOfPawn);
-                // TODO: Allow "En Passant"
-            }
-        }
+        String inFrontOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (1 * movementDirection));
+        String twoInFrontOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (2 * movementDirection));
+        pawnMoves.add(inFrontOfPawn);
+        pawnMoves.add(twoInFrontOfPawn);
+
+        // if (!board.containsKey(inFrontOfPawn)) {
+        //     pawnMoves.add(inFrontOfPawn);
+        //     String twoInFrontOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (2 * movementDirection));
+        //     if (!piece.hasMoved() && !board.containsKey(twoInFrontOfPawn)) {
+        //         pawnMoves.add(twoInFrontOfPawn);
+        //     }
+        // }
 
         char currentFile = (char) (piece.getX_pos() + 96);
-        String forwardRightOfPawn = convertXYPosToNotation(piece.getX_pos() + 1, piece.getY_pos() + (1 * movementDirection));
-        String forwardLeftOfPawn = convertXYPosToNotation(piece.getX_pos() - 1, piece.getY_pos() + (1 * movementDirection));
-        if (board.containsKey(forwardRightOfPawn)) {
-            if (board.get(forwardRightOfPawn).getTeam() != piece.getTeam()) {
-                pawnMoves.add(currentFile + "x" + forwardRightOfPawn);
-            }
-            BoardState.getBoardState().addToAttackMap(piece.getTeam(), forwardRightOfPawn);
-        }
-        if (board.containsKey(forwardLeftOfPawn)) {
-            if (board.get(forwardLeftOfPawn).getTeam() != piece.getTeam()) {
-                pawnMoves.add(currentFile + "x" + forwardLeftOfPawn);
-            }
-            BoardState.getBoardState().addToAttackMap(piece.getTeam(), forwardLeftOfPawn);
-        }
+        String forwardRightOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos() + 1, piece.getY_pos() + (1 * movementDirection));
+        String forwardLeftOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos() - 1, piece.getY_pos() + (1 * movementDirection));
+        pawnMoves.add(currentFile + "x" + forwardRightOfPawn);
+        pawnMoves.add(currentFile + "x" + forwardLeftOfPawn);
+
+        // if (board.containsKey(forwardRightOfPawn)) {
+        //     if (board.get(forwardRightOfPawn).getTeam() != piece.getTeam()) {
+        //         pawnMoves.add(currentFile + "x" + forwardRightOfPawn);
+        //     }
+        //     BoardState.getBoardState().addToAttackMap(piece.getTeam(), forwardRightOfPawn);
+        // }
+        // if (board.containsKey(forwardLeftOfPawn)) {
+        //     if (board.get(forwardLeftOfPawn).getTeam() != piece.getTeam()) {
+        //         pawnMoves.add(currentFile + "x" + forwardLeftOfPawn);
+        //     }
+        //     BoardState.getBoardState().addToAttackMap(piece.getTeam(), forwardLeftOfPawn);
+        // }
 
         return pawnMoves;
     }

@@ -2,8 +2,6 @@ package main.boardState.chessPieces;
 
 import java.util.ArrayList;
 
-import main.boardState.BoardUtils;
-
 public class Knight extends Piece {
 
     public Knight(char team, int x_pos, int y_pos) {
@@ -14,7 +12,7 @@ public class Knight extends Piece {
     public void setPossibleMoves() {
         this.possibleMoves = new ArrayList<>();
         
-        this.possibleMoves.addAll(BoardUtils.getKnightMoves(this));
+        this.possibleMoves.addAll(PieceUtils.getKnightMoves(this));
     }
     
 }

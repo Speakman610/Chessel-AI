@@ -2,8 +2,6 @@ package main.boardState.chessPieces;
 
 import java.util.ArrayList;
 
-import main.boardState.BoardUtils;
-
 public class Bishop extends Piece {
     int range = 8;
 
@@ -15,6 +13,6 @@ public class Bishop extends Piece {
     public void setPossibleMoves() {
         this.possibleMoves = new ArrayList<>();
 
-        this.possibleMoves.addAll(BoardUtils.getDiagonalMoves(this, range));
+        this.possibleMoves.addAll(PieceUtils.getDiagonalMoves(this, range));
     }
 }

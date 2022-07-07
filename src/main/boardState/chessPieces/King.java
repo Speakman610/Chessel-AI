@@ -2,8 +2,6 @@ package main.boardState.chessPieces;
 
 import java.util.ArrayList;
 
-import main.boardState.BoardUtils;
-
 public class King extends Piece {
     int range = 1;
 
@@ -15,8 +13,8 @@ public class King extends Piece {
     public void setPossibleMoves() {
         this.possibleMoves = new ArrayList<>();
 
-        this.possibleMoves.addAll(BoardUtils.getDiagonalMoves(this, range));
-        this.possibleMoves.addAll(BoardUtils.getAdjacentMoves(this, range));
+        this.possibleMoves.addAll(PieceUtils.getDiagonalMoves(this, range));
+        this.possibleMoves.addAll(PieceUtils.getAdjacentMoves(this, range));
     }
     
 }
