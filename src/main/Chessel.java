@@ -1,21 +1,20 @@
 package main;
-import java.util.List;
 
 import main.boardState.BoardState;
 
 public class Chessel {
     public static final String ANSI_RESET = "\u001B[0m";
-    public static final String ANSI_BLACK = "\u001B[30m";
+    public static final String ANSI_GREY = "\u001B[30m";
     public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32m";
-    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_CYAN = "\u001B[32m";
+    public static final String ANSI_ORANGE = "\u001B[33m";
     public static final String ANSI_BLUE = "\u001B[34m";
-    public static final String ANSI_PURPLE = "\u001B[35m";
-    public static final String ANSI_CYAN = "\u001B[36m";
+    public static final String ANSI_PINK = "\u001B[35m";
+    public static final String ANSI_PURPLE = "\u001B[36m";
     public static final String ANSI_WHITE = "\u001B[37m";
     
     public static void main(String[] args) throws Exception {
-        System.out.println("Welcome to Chessel!");
+        System.out.println(ANSI_ORANGE + "Welcome to Chessel!" + ANSI_RESET);
         BoardState board = BoardState.getBoardState();
         board.setPossibleMoves();
         
@@ -35,30 +34,11 @@ public class Chessel {
                     System.out.println("Please try again: ");
                 }
             } while (invalidMove);
-            System.out.println("\nPOSSIBLE MOVES: \n");
-            List<String> possibleMoves = board.getPossibleMoves(board.getTurn());
-            for (String move : possibleMoves) {
-                System.out.println(move);
-            }
+            // System.out.println("\nPOSSIBLE MOVES:");
+            // List<String> possibleMoves = board.getPossibleMoves();
+            // for (String move : possibleMoves) {
+            //     System.out.println(move);
+            // }
         }
-
-        // TODO: Allow king to capture pieces (attack maps need to subtract)
-
-        // possibleMoves = board.getPossibleMoves('b');
-
-        // System.out.println("\nMOVES FOR BLACK: ");
-        // for (String move : possibleMoves) {
-        //     if (move.startsWith(notationStartsWith)) {
-        //         System.out.println(move);
-        //     }
-        // }
-
-        // System.out.println("");
-        // board.makeMove("a4");
-
-        // System.out.println("");
-        // board.makeMove("Nc3");
-
-        // board.printCurrentBoard();
     }
 }

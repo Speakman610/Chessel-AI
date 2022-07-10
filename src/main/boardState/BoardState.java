@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import main.ChesselUtils;
 import main.boardState.chessPieces.Bishop;
@@ -11,7 +12,6 @@ import main.boardState.chessPieces.King;
 import main.boardState.chessPieces.Knight;
 import main.boardState.chessPieces.Pawn;
 import main.boardState.chessPieces.Piece;
-import main.boardState.chessPieces.PieceUtils;
 import main.boardState.chessPieces.Queen;
 import main.boardState.chessPieces.Rook;
 import main.exceptions.InternalApplicationException;
@@ -20,24 +20,25 @@ import main.exceptions.InvalidMoveException;
 public class BoardState implements BoardState_Interface {
     private static BoardState boardState = null; // instance of the board state to create a singleton class
     private Map<String, Piece> board;
-    private Map<String, Integer> whiteAttackMap;
-    private Map<String, Integer> blackAttackMap;
     private boolean inCheckWhite;
     private boolean inCheckBlack;
     private boolean whiteCanCastleKingSide;
     private boolean whiteCanCastleQueenSide;
     private boolean blackCanCastleKingSide;
     private boolean blackCanCastleQueenSide;
+    private String whiteKingCoords;
+    private String blackKingCoords;
+    List<String> possibleMoves = null;
     private char turn; // the current turn in the game
 
     private static final String ANSI_RESET = "\u001B[0m";
-    private static final String ANSI_BLACK = "\u001B[30m";
+    private static final String ANSI_GREY = "\u001B[30m";
     private static final String ANSI_RED = "\u001B[31m";
-    private static final String ANSI_GREEN = "\u001B[32m";
-    private static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_CYAN = "\u001B[32m";
+    private static final String ANSI_ORANGE = "\u001B[33m";
     private static final String ANSI_BLUE = "\u001B[34m";
-    private static final String ANSI_PURPLE = "\u001B[35m";
-    private static final String ANSI_CYAN = "\u001B[36m";
+    private static final String ANSI_PINK = "\u001B[35m";
+    private static final String ANSI_PURPLE = "\u001B[36m";
     private static final String ANSI_WHITE = "\u001B[37m";
 
     /*
@@ -87,12 +88,18 @@ public class BoardState implements BoardState_Interface {
         board.put("g8", new Knight('b', 7, 8));
         board.put("h8", new Rook('b', 8, 8));
 
-        clearAttackMaps();
         inCheckWhite = false;
         inCheckBlack = false;
         turn = 'w';
     }
 
+    /**
+     * Since BoardState is a singleton class, only one instance 
+     * of the class should exist at any given moment
+     * 
+     * @return the instance of the BoardState or create an instance
+     * if one does not exist
+     */
     public static BoardState getBoardState() {
         if (boardState == null) {
             boardState = new BoardState();
@@ -102,114 +109,302 @@ public class BoardState implements BoardState_Interface {
     }
 
     @Override
-    public List<String> getPossibleMoves(char team) {
-        List<String> possibleMoves = new ArrayList<>();
-
-        for (Map.Entry<String, Piece> entry : board.entrySet()) {
-            if (entry.getValue().getTeam() == team) {
-                possibleMoves.addAll(entry.getValue().getPossibleMoves());
-            }
+    public List<String> getPossibleMoves() {
+        if (possibleMoves == null) {
+            setPossibleMoves();
         }
-
-        possibleMoves.addAll(PieceUtils.getCastling(team));
-
-        // return filterInvalidMoves(possibleMoves);
         return possibleMoves;
     }
 
+    /**
+     * Set all possible moves that can be taken in the given turn
+     */
     public void setPossibleMoves() {
         /*
          * STEPS TO SETTING POSSIBLE MOVES
          * 
-         * √ Mark all attacking moves with an x
-         * √ Set if castling is possible (false if enemy is attacking castling spaces)
-         * √ Remove moves on teammates
-         * √ Remove move-through-piece moves
-         * Specify pieces for duplicate moves
-         * X Add to attack maps (obsolete)
+         * Mark all attacking moves with an x
+         * Set if castling is possible (false if enemy is attacking castling spaces)
+         * TODO: Specify pieces for duplicate moves
          * Add possible castling
-         * Label if in check
+         * Set in check flags
          * Remove still-in-check moves (only for current turn)
          */
-        clearAttackMaps();
-        for (Map.Entry<String, Piece> entry : board.entrySet()) {
-            if (entry.getValue().getNotation() != "K") {
-                entry.getValue().setPossibleMoves();
-            }
-        }
-        
-        /*
-         * After all of the pieces have determined their
-         * possible moves, calculate moves for the
-         * kings to take into account attack maps
-         */
-        for (Piece piece : board.values()) {
-            if (piece.getNotation() == "K") {
-                piece.setPossibleMoves();
-                int x_pos = piece.getX_pos();
-                int y_pos = piece.getY_pos();
-                String location = ChesselUtils.convertXYPosToNotation(x_pos, y_pos);
-                if (whiteAttackMap.get(location) > 0 && piece.getTeam() == 'b') {
-                    inCheckBlack = true;
-                } else {
-                    inCheckBlack = false;
-                }
 
-                if (blackAttackMap.get(location) > 0 && piece.getTeam() == 'w') {
-                    inCheckWhite = true;
+        possibleMoves = new ArrayList<>();
+        whiteCanCastleKingSide = true;
+        whiteCanCastleQueenSide = true;
+        blackCanCastleKingSide = true;
+        blackCanCastleQueenSide = true;
+
+        for (Map.Entry<String, Piece> entry : board.entrySet()) {
+            // it is still necessary to calculate moves even for the enemy team so that proper flags can be set
+            Piece piece = entry.getValue();
+            List<String> temporaryMoveList = calculateGeneralPieceMovement(piece);
+            if (piece.getNotation() == "K") {
+                if (piece.getTeam() == 'w') {
+                    whiteKingCoords = piece.getNotationCoords();
                 } else {
-                    inCheckWhite = false;
+                    blackKingCoords = piece.getNotationCoords();
                 }
             }
+            if (piece.getTeam() == turn) {
+                possibleMoves.addAll(temporaryMoveList);
+            }
         }
+
+        List<String> tempList = new ArrayList<>();
+        tempList.addAll(possibleMoves); // this to prevent editing the possibleMoves list while also iterating over it
+        try {
+            possibleMoves = removeStillInCheckMoves(tempList);
+        } catch (InternalApplicationException e) {
+            e.printStackTrace();
+        }
+
+        possibleMoves.addAll(getCastling());
+        setCheckFlags();
     }
 
+    /**
+     * Takes a piece as a parameter and determines all possible moves for the piece.
+     * Additionally, this method sets some flags for whether or not castling is possible.
+     * 
+     * @param piece is the piece to calculate movement for
+     * @return a list of valid moves for the given piece
+     */
     private List<String> calculateGeneralPieceMovement(Piece piece) {
+        // TODO: add "En Passant"
+        // TODO: add promotion
+        piece.setPossibleMoves();
         List<String> moveList = piece.getPossibleMoves();
-        List<String> toRemove = new ArrayList<>();
+        List<String> validMoves = new ArrayList<>();
         for (String move : moveList) {
             String[] splitNotation = splitMoveNotation(move);
             String notationCoords = splitNotation[0];
             if (board.containsKey(notationCoords)) {
                 Piece pieceAtCoords = board.get(notationCoords);
-                if (pieceAtCoords.getTeam() == piece.getTeam()) {
-                    // if the pieces are on the same team the move is invalid
-                    toRemove.add(move);
-                } else {
-                    // if the pieces are enemies, add an 'x' to the move notation
-                    move = addXToNotation(move);
-                    int[] xy_pos = ChesselUtils.convertNotationCoordToXYCoord(notationCoords);
-                    int x_pos = xy_pos[0];
-                    int y_pos = xy_pos[1];
+                if (pieceAtCoords.getTeam() != piece.getTeam()) {
+                    // if there is a piece at that space but the pieces are enemies, add an 'x' to the move notation
+                    validMoves.add(addXToNotation(move));
+                }
+            } else {
+                // if there is no piece on the given space the piece can move there,
+                // but pawns can capture diagonally, but should not be able to capture if there is not a piece
+                // at the diagonal location.
+                if (!move.contains("x")) {
+                    validMoves.add(move);
+                }
+            }
 
-                    if (piece.getTeam() == 'w' && y_pos == 8) {
-                        if (x_pos >= 2 && x_pos <= 4) {
-                            blackCanCastleQueenSide = false;
-                        } else if (x_pos >= 6 && x_pos <= 7) {
-                            blackCanCastleKingSide = false;
-                        }
-                    } else if (y_pos == 1) {
-                        if (x_pos >= 2 && x_pos <= 4) {
-                            whiteCanCastleQueenSide = false;
-                        } else if (x_pos >= 6 && x_pos <= 7) {
-                            whiteCanCastleKingSide = false;
-                        }
-                    }
+            // Check to see if the move lands on one of the castling spaces of the enemy team
+            // If it does, mark that castling is not possible 
+            int[] xy_pos = ChesselUtils.convertNotationCoordToXYCoord(notationCoords);
+            int x_pos = xy_pos[0];
+            int y_pos = xy_pos[1];
+
+            if (piece.getTeam() == 'w' && y_pos == 8) {
+                if (x_pos >= 2 && x_pos <= 4) {
+                    blackCanCastleQueenSide = false;
+                } else if (x_pos >= 6 && x_pos <= 7) {
+                    blackCanCastleKingSide = false;
+                }
+            } else if (piece.getTeam() == 'b' && y_pos == 1) {
+                if (x_pos >= 2 && x_pos <= 4) {
+                    whiteCanCastleQueenSide = false;
+                } else if (x_pos >= 6 && x_pos <= 7) {
+                    whiteCanCastleKingSide = false;
                 }
             }
         }
-        moveList.removeAll(toRemove);
-        return moveList;
+        return validMoves;
     }
 
+    /**
+     * When capturing another piece, an 'x' is put in the 
+     * notation to show that a piece was captured
+     * 
+     * @param move is the move we need to add 'x' to
+     * @return the given move with 'x' added in the appropriate place
+     * in the notation
+     */
     private String addXToNotation(String move) {
         if (move.contains("x")) return move;
         return move.charAt(0) + "x" + move.substring(1);
     }
 
+    /**
+     * Set the flags indicating whether white or black are in check
+     */
     private void setCheckFlags() {
+        inCheckWhite = whiteIsInCheck();
+        inCheckBlack = blackIsInCheck();
+    }
+
+    /**
+     * This method looks to see if the white king is in check.
+     * 
+     * @return boolean. True if white king is in check.
+     */
+    private boolean whiteIsInCheck() {
+        return kingIsInCheck('w', whiteKingCoords);
+    }
+
+    /**
+     * This method looks to see if the black king is in check.
+     * 
+     * @return boolean. True if black king is in check.
+     */
+    private boolean blackIsInCheck() {
+        return kingIsInCheck('b', blackKingCoords);
+    }
+
+    /**
+     * This method looks to see if a given king is in check.
+     * 
+     * @param team is the team of the king to check for.
+     * @param kingCoords is the location of the king to check for.
+     * @return true if the given king is in check.
+     */
+    private boolean kingIsInCheck(char team, String kingCoords) {
+        char enemyTeam = 'w';
+        if (team == 'w') enemyTeam = 'b';
         for (Map.Entry<String, Piece> entry : board.entrySet()) {
-            // if an enemy piece is attacking where the king is then set a check flag
+            Piece piece = entry.getValue();
+            if (piece.getTeam() == enemyTeam) {
+                for (String move : piece.getPossibleMoves()) {
+                    String notationCoords = splitMoveNotation(move)[0];
+                    if (notationCoords.equals(kingCoords)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Filters out all invalid moves from a given list
+     * 
+     * @param moveList is a list of moves to filter
+     * @return a list with all invalid moves filtered out
+     * @throws InternalApplicationException when the copyMap() method fails to clone a piece properly
+     */
+    private List<String> removeStillInCheckMoves(List<String> moveList) throws InternalApplicationException {
+        Map<String, Piece> boardCopy = copyMap(board);
+        List<String> validMoves = new ArrayList<>();
+        char team = turn;
+
+        for (String move : moveList) {
+            try {
+                movePiece(move);
+                for (Map.Entry<String, Piece> entry : board.entrySet()) {
+                    // it is still necessary to calculate moves even for the enemy team so that proper flags can be set
+                    Piece piece = entry.getValue();
+                    List<String> temporaryMoveList = calculateGeneralPieceMovement(piece);
+                    if (piece.getNotation() == "K") {
+                        if (piece.getTeam() == 'w') {
+                            whiteKingCoords = piece.getNotationCoords();
+                        } else {
+                            blackKingCoords = piece.getNotationCoords();
+                        }
+                    }
+                    if (piece.getTeam() == turn) {
+                        possibleMoves.addAll(temporaryMoveList);
+                    }
+                }
+
+                setCheckFlags();
+                if (team == 'w') {
+                    if (!whiteInCheck()) validMoves.add(move);
+                } else {
+                    if (!blackInCheck()) validMoves.add(move);
+                }
+                
+                board = copyMap(boardCopy);
+            } catch (InvalidMoveException | InternalApplicationException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return validMoves;
+    }
+
+    /**
+     * Clones a given map of type Map<String, Piece>
+     * 
+     * @param original is the map to copy
+     * @return a clone of the original map
+     * @throws InternalApplicationException when a piece fails to clone properly
+     */
+    private Map<String, Piece> copyMap(Map<String, Piece> original) throws InternalApplicationException {
+        Map<String, Piece> copy = new HashMap<>();
+        for (Entry<String, Piece> entry : original.entrySet()) {
+            try {
+                copy.put(entry.getKey(), entry.getValue().clone());
+            } catch (CloneNotSupportedException e) {
+                throw new InternalApplicationException("Failure to copy current board");
+            }
+        }
+
+        return copy;
+    }
+
+    /**
+     * Creates a list of castling options for the current turn
+     * 
+     * @return a list of castling options for the current turn
+     */
+    private List<String> getCastling() {
+        List<String> castlingOptions = new ArrayList<>();
+
+        boolean kingCanCastle = false;
+        boolean rookACanCastle = false;
+        boolean rookHCanCastle = false;
+        boolean queenSideClear = false;
+        boolean kingSideClear = false;
+        boolean notInCheck = false;
+        
+        int rowToCheck = 1;
+        if (turnBlack()) rowToCheck = 8;
+
+        if (board.containsKey("e" + rowToCheck)) kingCanCastle = !board.get("e" + rowToCheck).hasMoved();
+        if (board.containsKey("a" + rowToCheck)) rookACanCastle = !board.get("a" + rowToCheck).hasMoved();
+        if (board.containsKey("h" + rowToCheck)) rookHCanCastle = !board.get("h" + rowToCheck).hasMoved();
+        queenSideClear = !(board.containsKey("d" + rowToCheck) || board.containsKey("c" + rowToCheck) || board.containsKey("b" + rowToCheck)) && safeToCastle("QUEEN");
+        kingSideClear = !(board.containsKey("f" + rowToCheck) || board.containsKey("g" + rowToCheck)) && safeToCastle("KING");
+
+        if (turnWhite()) {
+            notInCheck = !inCheckWhite;
+        } else {
+            notInCheck = !inCheckBlack;
+        }
+
+        if (kingCanCastle && notInCheck) {
+            if (rookACanCastle && queenSideClear) castlingOptions.add("O-O-O");
+            if (rookHCanCastle && kingSideClear) castlingOptions.add("O-O");
+        }
+
+        return castlingOptions;
+    }
+
+    /**
+     * Determines whether or not a castling side is valid
+     *
+     * @param castlingSide is the side to check for (KING or QUEEN)
+     * @return whether or not that side is safe to castle on (true means it is safe)
+     */
+    private boolean safeToCastle(String castlingSide) {
+
+        if (castlingSide == "QUEEN") {
+            if (turnWhite()) {
+                return whiteCanCastleQueenSide;
+            } else {
+                return blackCanCastleQueenSide;
+            }
+        } else {
+            if (turnWhite()) {
+                return whiteCanCastleKingSide;
+            } else {
+                return blackCanCastleKingSide;
+            }
         }
     }
 
@@ -218,8 +413,8 @@ public class BoardState implements BoardState_Interface {
      * piece will be moved to from the letter that signifies a given piece,
      * returning them as a String array.
      * 
-     * @param move
-     * @return notationCoords at index 0 and pieceNotation at index 1
+     * @param move is the move to be made
+     * @return a string array with the notationCoords at index 0 and the pieceNotation at index 1
      */
     private String[] splitMoveNotation(String move) {
         String notationCoords = "";
@@ -238,115 +433,73 @@ public class BoardState implements BoardState_Interface {
 
     @Override
     public void makeMove(String inputMove) throws InvalidMoveException, InternalApplicationException {
-        if (!getPossibleMoves(turn).contains(inputMove)) throw new InvalidMoveException("The move " + inputMove + " is not a valid move.");
-
-        // String notationCoords = "";
-        // String pieceNotation = "";
-        // Piece pieceToMove = null;
-        
-        // for (int i = 0; i < inputMove.length(); i++) {
-        //     char c = inputMove.charAt(i);
-        //     // 1 -> 49, 8 -> 56
-        //     if (c >= 49 && c <= 56) {
-        //         notationCoords = inputMove.charAt(i - 1) + "" + c;
-        //         pieceNotation = inputMove.substring(0, i - 1);
-        //         if (pieceNotation.length() > 1) {
-        //             pieceNotation = pieceNotation.substring(0, 1);
-        //         }
-        //     }
-        // }
-
-        // for (Piece piece : board.values()) {
-        //     if (pieceNotation.equals(piece.getNotation()) &&
-        //             turn == piece.getTeam() &&
-        //             piece.getPossibleMoves().contains(inputMove)) {
-        //         pieceToMove = piece;
-        //         break;
-        //     }
-        // }
-
-        // if (pieceToMove == null) throw new InternalApplicationException("Unable to make move due to an internal error");
-        // int[] xy_pos = BoardUtils.convertNotationCoordToXYCoord(notationCoords);
-        // board.remove(BoardUtils.convertXYPosToNotation(pieceToMove.getX_pos(), pieceToMove.getY_pos()));
-        // pieceToMove.movePiece(xy_pos[0], xy_pos[1]);
-        // board.put(notationCoords, pieceToMove);
+        if (!possibleMoves.contains(inputMove)) throw new InvalidMoveException("The move " + inputMove + " is not a valid move.");
 
         movePiece(inputMove);
         toggleTurn();
         setPossibleMoves();
-
-        // System.out.println("Notation Coords: " + notationCoords);
-        // System.out.println("Piece Notation: " + pieceNotation);
-
-        // TODO: Add the ability to castle
-        // TODO: Check to see if either side is in check or checkmate after each move
     }
 
     private void movePiece(String move) throws InternalApplicationException, InvalidMoveException {
-        String notationCoords = "";
-        String pieceNotation = "";
-        Piece pieceToMove = null;
-        
-        for (int i = 0; i < move.length(); i++) {
-            char c = move.charAt(i);
-            // 1 -> 49, 8 -> 56
-            if (c >= 49 && c <= 56) {
-                notationCoords = move.charAt(i - 1) + "" + c;
-                pieceNotation = "" + move.charAt(0);
+        // if this is a castling move it has to be handled differently than other moves
+        if (move.charAt(0) == 'O') {
+            Piece king = null;
+            Piece rook = null;
+            int row;
+            if (turnWhite()) {
+                row = 1;
+            } else {
+                row = 8;
             }
+            king = board.get("e" + row);
+            if (move.equals("O-O")) {
+                rook = board.get("h" + row);
+
+                placePiece(king, "g" + row);
+                placePiece(rook, "f" + row);
+            } else if (move.equals("O-O-O")) {
+                rook = board.get("a" + row);
+
+                placePiece(king, "c" + row);
+                placePiece(rook, "d" + row);
+            } else {
+                throw new InternalApplicationException("Unable to castle due to an internal error");
+            }
+            return;
         }
+
+        String[] splitNotation = splitMoveNotation(move);
+        String notationCoords = splitNotation[0];
+        String pieceNotation = splitNotation[1];
+        Piece pieceToMove = null;
 
         for (Piece piece : board.values()) {
-            if ((pieceNotation.equals(piece.getNotation())
-                || (pieceNotation.equals("" + (char) (piece.getX_pos() + 96)))) &&
-                    turn == piece.getTeam() &&
-                    piece.getPossibleMoves().contains(move)) {
-                pieceToMove = piece;
-                break;
+            if (turn == piece.getTeam()) {
+                if (pieceNotation.equals(piece.getNotation()) && piece.getPossibleMoves().contains(piece.getNotation() + notationCoords)) {
+                    pieceToMove = piece;
+                    break;
+                } else if (pieceNotation.equals("" + (char) (piece.getX_pos() + 96))) {
+                    if (piece.getPossibleMoves().contains(notationCoords) || piece.getPossibleMoves().contains(piece.getNotation() + "x" + notationCoords)) {
+                        pieceToMove = piece;
+                        break;
+                    }
+                }
             }
         }
 
-        if (pieceToMove == null) throw new InternalApplicationException("Unable to make move due to an internal error");
-        int[] xy_pos = ChesselUtils.convertNotationCoordToXYCoord(notationCoords);
-        board.remove(ChesselUtils.convertXYPosToNotation(pieceToMove.getX_pos(), pieceToMove.getY_pos()));
-        pieceToMove.movePiece(xy_pos[0], xy_pos[1]);
-        board.put(notationCoords, pieceToMove);
+        if (pieceToMove == null) throw new InternalApplicationException("Unable to move piece due to an internal error");
+        placePiece(pieceToMove, notationCoords);
     }
 
-    private List<String> filterInvalidMoves(List<String> moves) {
-        Map<String, Piece> board = getBoard();
-        Map<String, Piece> boardCopy = new HashMap<>(board);
-        
-        List<String> movesToRemove = new ArrayList<>();
-
-        for (String move : moves) {
-            try {
-                boolean turnWhite = turn == 'w';
-                movePiece(move);
-                setPossibleMoves();
-                if (turnWhite && whiteInCheck()) {
-                    movesToRemove.add(move);
-                } else if (!turnWhite && blackInCheck()) {
-                    movesToRemove.add(move);
-                }
-            } catch (Exception e) {
-                // e.printStackTrace();
-                movesToRemove.add(move);
-            }
-            this.board = new HashMap<>(boardCopy);
-            setPossibleMoves();
-        }
-        moves.removeAll(movesToRemove);
-        
-        return moves;
+    private void placePiece(Piece piece, String newCoords) throws InvalidMoveException {
+        int[] xy_pos = ChesselUtils.convertNotationCoordToXYCoord(newCoords);
+        board.remove(piece.getNotationCoords());
+        piece.movePiece(xy_pos[0], xy_pos[1]);
+        board.put(newCoords, piece);
     }
 
     @Override
     public void printCurrentBoard() {
-        // for (Map.Entry<String, Piece> entry : board.entrySet()) {
-        //     System.out.println(entry.getKey() + ": " + entry.getValue().getNotation() + entry.getValue().getTeam());
-        // }
-
         String boardPrint = "       ----==| CHESSEL |==----\n\n";
         boardPrint += "  |---|---|---|---|---|---|---|---|\n";
         for (int y = 8; y >= 1; y--) {
@@ -364,16 +517,30 @@ public class BoardState implements BoardState_Interface {
                     boardPrint += fill;
                 } else {
                     String pieceNotation;
-                    if (piece.getNotation() == "") {
-                        pieceNotation = "P";
-                    } else {
-                        pieceNotation = piece.getNotation();
+                    switch (piece.getNotation()) {
+                        case "K":
+                        case "Q":
+                        case "B":
+                        case "N":
+                        case "R":
+                            pieceNotation = piece.getNotation();
+                            break;
+                        default:
+                            pieceNotation = "P";
                     }
-                    if (piece.getTeam() == 'b') pieceNotation = pieceNotation.toLowerCase();
+
                     if (piece.getTeam() == 'w') {
-                        pieceNotation = ANSI_BLUE + pieceNotation + ANSI_RESET;
+                        if (piece.getNotation() == "K" && whiteInCheck()) {
+                            pieceNotation = ANSI_CYAN + pieceNotation + ANSI_RESET;
+                        } else {
+                            pieceNotation = ANSI_BLUE + pieceNotation + ANSI_RESET;
+                        }
                     } else {
-                        pieceNotation = ANSI_RED + pieceNotation + ANSI_RESET;
+                        if (piece.getNotation() == "K" && blackInCheck()) {
+                            pieceNotation = ANSI_ORANGE + pieceNotation + ANSI_RESET;
+                        } else {
+                            pieceNotation = ANSI_RED + pieceNotation + ANSI_RESET;
+                        }
                     }
                     boardPrint += pieceNotation;
                 }
@@ -383,17 +550,6 @@ public class BoardState implements BoardState_Interface {
         }
         boardPrint += "    a   b   c   d   e   f   g   h\n";
         System.out.println(boardPrint);
-    }
-
-    private void clearAttackMaps() {
-        blackAttackMap = new HashMap<>();
-        whiteAttackMap = new HashMap<>();
-        for (int i = 1; i <= 8; i++) {
-            for (int j = 1; j <= 8; j++) {
-                blackAttackMap.put(ChesselUtils.convertXYPosToNotation(i, j), 0);
-                whiteAttackMap.put(ChesselUtils.convertXYPosToNotation(i, j), 0);
-            }
-        }
     }
 
     public Map<String,Piece> getBoard() {
@@ -409,54 +565,37 @@ public class BoardState implements BoardState_Interface {
     }
 
     private void toggleTurn() {
-        if (turn == 'w') {
+        if (turnWhite()) {
             setTurn('b');
         } else {
             setTurn('w');
         }
     }
 
-    public boolean whiteInCheck() {
+    private boolean whiteInCheck() {
         return inCheckWhite;
     }
 
-    public boolean blackInCheck() {
+    private boolean blackInCheck() {
         return inCheckBlack;
     }
 
-    public void addToAttackMap(char team, String notationCoord) {
-        if (team == 'w') {
-            int attackingCount = whiteAttackMap.get(notationCoord);
-            attackingCount += 1;
-            whiteAttackMap.put(notationCoord, attackingCount);
-        } else {
-            int attackingCount = blackAttackMap.get(notationCoord);
-            attackingCount += 1;
-            blackAttackMap.put(notationCoord, attackingCount);
-        }
-    }
-
-    /*
-     * This method may be unnecessary
+    /**
+     * Check to see if it is white's turn
+     * 
+     * @return true if it is currently white's turn
      */
-    public void subtractFromAttackMap(char team, String notationCoord) {
-        if (team == 'w') {
-            int attackingCount = whiteAttackMap.get(notationCoord);
-            attackingCount -= 1;
-            whiteAttackMap.put(notationCoord, attackingCount);
-        } else {
-            int attackingCount = blackAttackMap.get(notationCoord);
-            attackingCount -= 1;
-            blackAttackMap.put(notationCoord, attackingCount);
-        }
+    private boolean turnWhite() {
+        return turn == 'w';
     }
 
-    public Map<String, Integer> getWhiteAttackMap() {
-        return whiteAttackMap;
-    }
-
-    public Map<String, Integer> getBlackAttackMap() {
-        return blackAttackMap;
+    /**
+     * Check to see if it is black's turn
+     * 
+     * @return true if it is currently black's turn
+     */
+    private boolean turnBlack() {
+        return turn == 'b';
     }
 
 }

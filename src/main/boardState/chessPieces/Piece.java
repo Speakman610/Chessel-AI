@@ -2,9 +2,10 @@ package main.boardState.chessPieces;
 
 import java.util.List;
 
+import main.ChesselUtils;
 import main.exceptions.InvalidMoveException;
 
-public abstract class Piece {
+public abstract class Piece implements Cloneable {
     protected char team;
     protected int x_pos;
     protected int y_pos;
@@ -23,12 +24,8 @@ public abstract class Piece {
     public abstract void setPossibleMoves();
 
     public void movePiece(int x_pos, int y_pos) throws InvalidMoveException {
-
-        // TODO: Make sure that a piece can't move if it will cause its king to be in check
-
         this.x_pos = x_pos;
         this.y_pos = y_pos;
-        // this.setPossibleMoves();
         hasMoved = true;
     }
 
@@ -50,6 +47,18 @@ public abstract class Piece {
 
     public boolean canMoveDown() { // Down is vertical in the negative direction
         return getY_pos() - 1 >= 1;
+    }
+
+    @Override
+    public Piece clone() throws CloneNotSupportedException {
+        Piece clone = (Piece) super.clone();
+        clone.team = this.team;
+        clone.notation = this.notation;
+        clone.hasMoved = this.hasMoved;
+        clone.x_pos = this.x_pos;
+        clone.y_pos = this.y_pos;
+
+        return clone;
     }
 
     public char getTeam() {
@@ -90,6 +99,10 @@ public abstract class Piece {
 
     public void setPossibleMoves(List<String> moves) {
         this.possibleMoves = moves;
+    }
+
+    public String getNotationCoords() {
+        return ChesselUtils.convertXYPosToNotation(this.x_pos, this.y_pos);
     }
 
 }
