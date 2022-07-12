@@ -163,9 +163,12 @@ public class PieceUtils {
         int movementDirection = getSign(direction);
 
         String inFrontOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (1 * movementDirection));
-        String twoInFrontOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (2 * movementDirection));
         pawnMoves.add(inFrontOfPawn);
-        pawnMoves.add(twoInFrontOfPawn);
+
+        if (!piece.hasMoved()) {
+            String twoInFrontOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (2 * movementDirection));
+            pawnMoves.add(twoInFrontOfPawn);
+        }
 
         char currentFile = (char) (piece.getX_pos() + 96);
         if (piece.getX_pos() + 1 <= 8) {

@@ -1,5 +1,7 @@
 package main;
 
+import java.util.List;
+
 import main.boardState.BoardState;
 
 public class Chessel {
@@ -14,7 +16,6 @@ public class Chessel {
     public static final String ANSI_WHITE = "\u001B[37m";
     
     public static void main(String[] args) throws Exception {
-        System.out.println(ANSI_ORANGE + "Welcome to Chessel!" + ANSI_RESET);
         BoardState board = BoardState.getBoardState();
         board.setPossibleMoves();
         
@@ -34,11 +35,11 @@ public class Chessel {
                     System.out.println("Please try again: ");
                 }
             } while (invalidMove);
-            // System.out.println("\nPOSSIBLE MOVES:");
-            // List<String> possibleMoves = board.getPossibleMoves();
-            // for (String move : possibleMoves) {
-            //     System.out.println(move);
-            // }
+            System.out.println("\nPOSSIBLE MOVES:");
+            List<String> possibleMoves = board.getPossibleMoves();
+            for (String move : possibleMoves) {
+                System.out.println(move);
+            }
         }
     }
 }
