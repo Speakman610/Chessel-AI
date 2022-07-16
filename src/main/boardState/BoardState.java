@@ -1,7 +1,9 @@
 package main.boardState;
 
+import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -126,10 +128,10 @@ public class BoardState implements BoardState_Interface {
          * 
          * Mark all attacking moves with an x
          * Set if castling is possible (false if enemy is attacking castling spaces)
-         * TODO: Specify pieces for duplicate moves
+         * Specify pieces for duplicate moves
+         * Remove still-in-check moves (only for current turn)
          * Add possible castling
          * Set in check flags
-         * Remove still-in-check moves (only for current turn)
          */
 
         possibleMoves = new ArrayList<>();
@@ -154,6 +156,8 @@ public class BoardState implements BoardState_Interface {
             }
         }
 
+        identifyDuplicateMoves(); // add piece identification to duplicate moves
+
         List<String> tempList = new ArrayList<>();
         tempList.addAll(possibleMoves); // this to prevent editing the possibleMoves list while also iterating over it
         try {
@@ -174,8 +178,7 @@ public class BoardState implements BoardState_Interface {
      * @return a list of valid moves for the given piece
      */
     private List<String> calculateGeneralPieceMovement(Piece piece) {
-        // TODO: add "En Passant"
-        // TODO: add promotion
+        // TODO: Add promotion
         piece.setPossibleMoves();
         List<String> moveList = piece.getPossibleMoves();
         List<String> validMoves = new ArrayList<>();
@@ -188,17 +191,17 @@ public class BoardState implements BoardState_Interface {
                     if (piece.getClass() == Pawn.class) {
                         validMoves.add(move);
                     } else {
-                        // if there is a piece at that space but the pieces are enemies, add an 'x' to the move notation
+                        // if there is a piece at that space but the pieces are enemies, 
+                        // add an 'x' to the move notation
                         validMoves.add(addXToNotation(move));
                     }
                 }
             } else {
                 // if there is no piece on the given space the piece can move there.
-                // Additionally, pawns can capture diagonally, but should not be able to capture if there is not a piece
-                // at the diagonal location unless it is the En Passant space.
-                if (!move.contains("x")) {
-                    validMoves.add(move);
-                } else if (notationCoords.equals(enPassantCoords)) {
+                // Additionally, pawns can capture diagonally, but should not be able to 
+                // capture if there is not a piece at the diagonal location 
+                // unless it is the En Passant space.
+                if (!move.contains("x") || notationCoords.equals(enPassantCoords)) {
                     validMoves.add(move);
                 }
             }
@@ -209,21 +212,78 @@ public class BoardState implements BoardState_Interface {
             int x_pos = xy_pos[0];
             int y_pos = xy_pos[1];
 
-            if (piece.getTeam() == 'w' && y_pos == 8) {
-                if (x_pos >= 2 && x_pos <= 4) {
-                    blackCanCastleQueenSide = false;
-                } else if (x_pos >= 6 && x_pos <= 7) {
-                    blackCanCastleKingSide = false;
-                }
-            } else if (piece.getTeam() == 'b' && y_pos == 1) {
-                if (x_pos >= 2 && x_pos <= 4) {
-                    whiteCanCastleQueenSide = false;
-                } else if (x_pos >= 6 && x_pos <= 7) {
-                    whiteCanCastleKingSide = false;
+            if (validMoves.contains(move)) {
+                if (piece.getTeam() == 'w' && y_pos == 8) {
+                    if (x_pos >= 2 && x_pos <= 4) {
+                        blackCanCastleQueenSide = false;
+                    } else if (x_pos >= 6 && x_pos <= 7) {
+                        blackCanCastleKingSide = false;
+                    }
+                } else if (piece.getTeam() == 'b' && y_pos == 1) {
+                    if (x_pos >= 2 && x_pos <= 4) {
+                        whiteCanCastleQueenSide = false;
+                    } else if (x_pos >= 6 && x_pos <= 7) {
+                        whiteCanCastleKingSide = false;
+                    }
                 }
             }
         }
         return validMoves;
+    }
+
+    private void identifyDuplicateMoves() {
+        HashSet<String> duplicatecheck = new HashSet<>();
+        List<String>duplicateMoves = new ArrayList<>();
+        for (String move : possibleMoves) {
+            if (!duplicatecheck.add(move)) {
+                duplicateMoves.add(move);
+            }
+        }
+
+        for (String move : duplicateMoves) {
+            String[] splitNotation = splitMoveNotation(move);
+            String notationCoords = splitNotation[0];
+            String pieceNotation = splitNotation[1];
+            List<Piece> validPieces = new ArrayList<>();
+            for (Map.Entry<String, Piece> entry : board.entrySet()) {
+                Piece piece = entry.getValue();
+                if (piece.getTeam() == turn &&
+                    piece.getNotation().equals(pieceNotation) &&
+                    piece.getPossibleMoves().contains(pieceNotation + notationCoords)) {
+                    validPieces.add(piece);
+                }
+            }
+
+            if (validPieces.size() == 2) {
+                Piece piece0 = validPieces.get(0);
+                Piece piece1 = validPieces.get(1);
+                if (piece0.getX_pos() != piece1.getX_pos()) {
+                    addSpecialIdentifiers(move, validPieces, true, false);
+                } else if (piece0.getY_pos() != piece1.getY_pos()) {
+                    addSpecialIdentifiers(move, validPieces, false, true);
+                }
+            } else if (validPieces.size() > 2) {
+                boolean useX = true;
+                boolean useY = true;
+                for (int i = validPieces.size(); i > 0; i--) {
+                    for (int j = 0; j < i; j++) {
+                        if (validPieces.get(i).getX_pos() == validPieces.get(j).getX_pos()) {
+                            useX = false;
+                        }
+                        if (validPieces.get(i).getY_pos() == validPieces.get(j).getY_pos()) {
+                            useY = false;
+                        }
+                    }
+                }
+                if (useX) {
+                    addSpecialIdentifiers(move, validPieces, true, false);
+                } else if (useY) {
+                    addSpecialIdentifiers(move, validPieces, false, true);
+                } else {
+                    addSpecialIdentifiers(move, validPieces, true, true);
+                }
+            }
+        }
     }
 
     /**
@@ -237,6 +297,26 @@ public class BoardState implements BoardState_Interface {
     private String addXToNotation(String move) {
         if (move.contains("x")) return move;
         return move.charAt(0) + "x" + move.substring(1);
+    }
+
+    private void addSpecialIdentifiers(String move, List<Piece> pieces, boolean useX, boolean useY) {
+        int pieceIndex = 0;
+        while(possibleMoves.contains(move)) {
+            int index = possibleMoves.indexOf(move); // returns the lowest index that contains the given move
+            String currentNotation = possibleMoves.get(index);
+            String newMoveNotation = "" + currentNotation.charAt(0);
+            if (useX) {
+                char x_char = ChesselUtils.convertIntToAlphabetChar(pieces.get(pieceIndex).getX_pos());
+                newMoveNotation += x_char;
+            }
+            if (useY) {
+                char y_char = ChesselUtils.convertIntToNumericalChar(pieces.get(pieceIndex).getY_pos());
+                newMoveNotation += y_char;
+            }
+            newMoveNotation += currentNotation.substring(1);
+            possibleMoves.set(index, newMoveNotation);
+            pieceIndex++;
+        }
     }
 
     /**
@@ -297,7 +377,15 @@ public class BoardState implements BoardState_Interface {
     private List<String> removeStillInCheckMoves(List<String> moveList) throws InternalApplicationException {
         Map<String, Piece> boardCopy = copyMap(board);
         List<String> validMoves = new ArrayList<>();
-        String enPassantPlaceHolder = enPassantCoords;
+        boolean inCheckWhiteTemp = inCheckWhite;
+        boolean inCheckBlackTemp = inCheckBlack;
+        boolean whiteCanCastleKingSideTemp = whiteCanCastleKingSide;
+        boolean whiteCanCastleQueenSideTemp = whiteCanCastleQueenSide;
+        boolean blackCanCastleQueenSideTemp = blackCanCastleQueenSide;
+        boolean blackCanCastleKingSideTemp = blackCanCastleKingSide;
+        String whiteKingCoordsTemp = whiteKingCoords;
+        String blackKingCoordsTemp = blackKingCoords;
+        String enPassantCoordsTemp = enPassantCoords;
         char team = turn;
 
         for (String move : moveList) {
@@ -327,7 +415,15 @@ public class BoardState implements BoardState_Interface {
                 }
                 
                 board = copyMap(boardCopy);
-                enPassantCoords = enPassantPlaceHolder;
+                inCheckWhite = inCheckWhiteTemp;
+                inCheckBlack = inCheckBlackTemp;
+                whiteCanCastleKingSide = whiteCanCastleKingSideTemp;
+                whiteCanCastleQueenSide = whiteCanCastleQueenSideTemp;
+                blackCanCastleQueenSide = blackCanCastleQueenSideTemp;
+                blackCanCastleKingSide = blackCanCastleKingSideTemp;
+                whiteKingCoords = whiteKingCoordsTemp;
+                blackKingCoords = blackKingCoordsTemp;
+                enPassantCoords = enPassantCoordsTemp;
             } catch (InvalidMoveException e) {
                 // TODO: Add exception handling
             }
@@ -423,26 +519,44 @@ public class BoardState implements BoardState_Interface {
      * returning them as a String array.
      * 
      * @param move is the move to be made
-     * @return a string array with the notationCoords at index 0 and the pieceNotation at index 1
+     * @return a string array with the notationCoords at index 0, the pieceNotation at index 1
+     * and the  specialIdentifier at 2
      */
     private String[] splitMoveNotation(String move) {
         String notationCoords = "";
         String pieceNotation = "";
+        String specialIdentifier = "";
 
-        for (int i = 0; i < move.length(); i++) {
-            char c = move.charAt(i);
+        for (int i = move.length() - 1; i >= 0; i--) {
+            char currentChar = move.charAt(i);
             // 1 -> 49, 8 -> 56
-            if (c >= 49 && c <= 56) {
-                notationCoords = move.charAt(i - 1) + "" + c;
-                pieceNotation = "" + move.charAt(0);
+            if (currentChar >= 49 && currentChar <= 56) {
+                char previousChar = move.charAt(i - 1);
+                // a -> 97, h -> 104
+                if (previousChar >= 97 && previousChar <= 104) {
+                    notationCoords = previousChar + "" + currentChar;
+                    pieceNotation = "" + move.charAt(0);
+                    if (move.length() > 3) {
+                        specialIdentifier = move.substring(1, i - 1);
+                        if (specialIdentifier.endsWith("x")) {
+                            if (specialIdentifier.length() > 1) {
+                                specialIdentifier = specialIdentifier.substring(0, specialIdentifier.charAt(specialIdentifier.length() - 1));
+                            } else {
+                                specialIdentifier = "";
+                            }
+                        }
+                    }
+                }
             }
         }
-        return new String[] {notationCoords, pieceNotation};
+        return new String[] {notationCoords, pieceNotation, specialIdentifier};
     }
 
     @Override
     public void makeMove(String inputMove) throws InvalidMoveException, InternalApplicationException {
         if (!possibleMoves.contains(inputMove)) throw new InvalidMoveException("The move " + inputMove + " is not a valid move.");
+
+        System.out.println("Special Identifier: " + splitMoveNotation(inputMove)[2]);
 
         movePiece(inputMove);
         toggleTurn();
@@ -475,59 +589,106 @@ public class BoardState implements BoardState_Interface {
             } else {
                 throw new InternalApplicationException("Unable to castle due to an internal error");
             }
+            enPassantCoords = "";
             return;
         }
 
         String[] splitNotation = splitMoveNotation(move);
         String notationCoords = splitNotation[0];
-        String pieceNotation = splitNotation[1];
         Piece pieceToMove = null;
 
         for (Piece piece : board.values()) {
-            if (turn == piece.getTeam()) {
-                if (pieceNotation.equals(piece.getNotation()) && piece.getPossibleMoves().contains(piece.getNotation() + notationCoords)) {
+            if (validPiece(piece, move)) {
+                if (piece.getPossibleMoves().contains(piece.getNotation() + notationCoords)) {
                     pieceToMove = piece;
+                    enPassantCoords = "";
                     break;
-                } else if (pieceNotation.equals("" + (char) (piece.getX_pos() + 96))) {
-                    if (piece.getPossibleMoves().contains(notationCoords) || piece.getPossibleMoves().contains(piece.getNotation() + "x" + notationCoords)) {
-                        pieceToMove = piece;
+                } else if (piece.getPossibleMoves().contains(notationCoords) || 
+                            piece.getPossibleMoves().contains(piece.getNotation() + "x" + notationCoords)) {
+                    pieceToMove = piece;
 
-                        // special En Passant considerations
-                        if (piece.getClass() == Pawn.class) {
-                            int[] xy_pos = ChesselUtils.convertNotationCoordToXYCoord(notationCoords);
-                            int x_pos = xy_pos[0];
-                            int y_pos = xy_pos[1];
+                    // special En Passant considerations
+                    if (piece.getClass() == Pawn.class) {
+                        int[] xy_pos = ChesselUtils.convertNotationCoordToXYCoord(notationCoords);
+                        int x_pos = xy_pos[0];
+                        int y_pos = xy_pos[1];
 
-                            // if a pawn captures on the En Passant coords then the pawn that jumped 2 spaces must be captured
-                            // move.contains("x") is probably unnecessary but it adds a safety check to the if statement
-                            if (notationCoords.equals(enPassantCoords)) {
-                                if (turnWhite()) {
-                                    board.remove(ChesselUtils.convertXYPosToNotation(x_pos, y_pos - 1));
-                                } else {
-                                    board.remove(ChesselUtils.convertXYPosToNotation(x_pos, y_pos + 1));
-                                }
+                        // if a pawn captures on the En Passant coords then the pawn that jumped 2 spaces must be captured
+                        // move.contains("x") is probably unnecessary but it adds a safety check to the if statement
+                        if (notationCoords.equals(enPassantCoords)) {
+                            if (turnWhite()) {
+                                board.remove(ChesselUtils.convertXYPosToNotation(x_pos, y_pos - 1));
+                            } else {
+                                board.remove(ChesselUtils.convertXYPosToNotation(x_pos, y_pos + 1));
                             }
-
-                            // reset En Passant coords and then check if their are new coords to add
-                            enPassantCoords = "";
-
-                            // set En Passant coordinates if a pawn moves two spaces
-                            if (!piece.hasMoved()) {
-                                if (y_pos == piece.getY_pos() + 2) {
-                                    enPassantCoords = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + 1);
-                                } else if (y_pos == piece.getY_pos() - 2) {
-                                    enPassantCoords = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() - 1);
-                                }
-                            }
-                        } else {
-                            // reset en passant for the movement of non-pawn pieces
-                            enPassantCoords = "";
                         }
-                        break;
+
+                        // reset En Passant coords and then check if their are new coords to add
+                        enPassantCoords = "";
+
+                        // set En Passant coordinates if a pawn moves two spaces
+                        if (!piece.hasMoved()) {
+                            if (y_pos == piece.getY_pos() + 2) {
+                                enPassantCoords = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + 1);
+                            } else if (y_pos == piece.getY_pos() - 2) {
+                                enPassantCoords = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() - 1);
+                            }
+                        }
+                    } else {
+                        enPassantCoords = "";
                     }
+
+                    break;
                 }
             }
         }
+
+        // for (Piece piece : board.values()) {
+        //     if (turn == piece.getTeam()) {
+        //         if (pieceNotation.equals(piece.getNotation()) && piece.getPossibleMoves().contains(piece.getNotation() + notationCoords)) {
+        //             pieceToMove = piece;
+        //             enPassantCoords = "";
+        //             break;
+        //         } else if (pieceNotation.equals("" + (char) (piece.getX_pos() + 96))) {
+        //             if (piece.getPossibleMoves().contains(notationCoords) || piece.getPossibleMoves().contains(piece.getNotation() + "x" + notationCoords)) {
+        //                 pieceToMove = piece;
+
+        //                 // special En Passant considerations
+        //                 if (piece.getClass() == Pawn.class) {
+        //                     int[] xy_pos = ChesselUtils.convertNotationCoordToXYCoord(notationCoords);
+        //                     int x_pos = xy_pos[0];
+        //                     int y_pos = xy_pos[1];
+
+        //                     // if a pawn captures on the En Passant coords then the pawn that jumped 2 spaces must be captured
+        //                     // move.contains("x") is probably unnecessary but it adds a safety check to the if statement
+        //                     if (notationCoords.equals(enPassantCoords)) {
+        //                         if (turnWhite()) {
+        //                             board.remove(ChesselUtils.convertXYPosToNotation(x_pos, y_pos - 1));
+        //                         } else {
+        //                             board.remove(ChesselUtils.convertXYPosToNotation(x_pos, y_pos + 1));
+        //                         }
+        //                     }
+
+        //                     // reset En Passant coords and then check if their are new coords to add
+        //                     enPassantCoords = "";
+
+        //                     // set En Passant coordinates if a pawn moves two spaces
+        //                     if (!piece.hasMoved()) {
+        //                         if (y_pos == piece.getY_pos() + 2) {
+        //                             enPassantCoords = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + 1);
+        //                         } else if (y_pos == piece.getY_pos() - 2) {
+        //                             enPassantCoords = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() - 1);
+        //                         }
+        //                     }
+        //                 } else {
+        //                     // reset en passant for the movement of non-pawn pieces
+        //                     enPassantCoords = "";
+        //                 }
+        //                 break;
+        //             }
+        //         }
+        //     }
+        // }
 
         if (pieceToMove == null) throw new InternalApplicationException("Unable to make move " + move + " due to an internal error");
         placePiece(pieceToMove, notationCoords);
@@ -538,6 +699,26 @@ public class BoardState implements BoardState_Interface {
         board.remove(piece.getNotationCoords());
         piece.movePiece(xy_pos[0], xy_pos[1]);
         board.put(newCoords, piece);
+    }
+
+    private boolean validPiece(Piece piece, String move) {
+        boolean valid = true;
+        String[] splitNotation = splitMoveNotation(move);
+        String pieceNotation = splitNotation[1];
+        String specialIdentifier = splitNotation[2];
+
+        valid = valid && piece.getTeam() == turn && pieceNotation.equals(piece.getNotation());
+        switch(specialIdentifier.length()) {
+            case 1:
+                String pieceLocation = piece.getNotationCoords();
+                valid = valid && (pieceLocation.charAt(0) == specialIdentifier.charAt(0) || pieceLocation.charAt(1) == specialIdentifier.charAt(0));
+                break;
+            case 2:
+                valid = valid && piece.getNotationCoords() == specialIdentifier;
+                break;
+        }
+
+        return valid;
     }
 
     @Override
