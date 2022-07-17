@@ -30,7 +30,6 @@ public class Chessel {
         }
 
         board.printCurrentBoard();
-        System.out.println("FINISHED");
         
         // for (int i = 0; i < 100; i++) {
         //     String turn = "White";

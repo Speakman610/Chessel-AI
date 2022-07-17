@@ -34,14 +34,14 @@ public class BoardState implements BoardState_Interface {
     private char turn; // the current turn in the game
 
     private static final String ANSI_RESET = "\u001B[0m";
-    private static final String ANSI_GREY = "\u001B[30m";
+    // private static final String ANSI_GREY = "\u001B[30m";
     private static final String ANSI_RED = "\u001B[31m";
     private static final String ANSI_CYAN = "\u001B[32m";
     private static final String ANSI_ORANGE = "\u001B[33m";
     private static final String ANSI_BLUE = "\u001B[34m";
-    private static final String ANSI_PINK = "\u001B[35m";
+    // private static final String ANSI_PINK = "\u001B[35m";
     private static final String ANSI_PURPLE = "\u001B[36m";
-    private static final String ANSI_WHITE = "\u001B[37m";
+    // private static final String ANSI_WHITE = "\u001B[37m";
 
     /*
      * Pieces should only track where they can move, excluding all information about the state of the board.
@@ -96,6 +96,17 @@ public class BoardState implements BoardState_Interface {
     }
 
     /**
+     * Sets the board to a given state. Used for testing the BoardState class
+     * 
+     * @param board is the state that you wish the board to be in
+     * @param turn is the current turn where 'w' is white and 'b' is black
+     */
+    public void setCustomBoard(Map<String, Piece> board, char turn) {
+        this.board = board;
+        this.turn = turn;
+    }
+
+    /**
      * Since BoardState is a singleton class, only one instance 
      * of the class should exist at any given moment
      * 
@@ -110,6 +121,11 @@ public class BoardState implements BoardState_Interface {
         return boardState;
     }
 
+    /**
+     * Get a list of all possible moves for the current turn
+     * 
+     * @return the list of moves that can be made
+     */
     @Override
     public List<String> getPossibleMoves() {
         if (possibleMoves == null) {
@@ -427,7 +443,7 @@ public class BoardState implements BoardState_Interface {
                 blackKingCoords = blackKingCoordsTemp;
                 enPassantCoords = enPassantCoordsTemp;
             } catch (InvalidMoveException e) {
-                // TODO: Add exception handling
+                throw new InternalApplicationException("Invalid string passed to removeStillInCheckMoves()");
             }
         }
 
@@ -554,13 +570,23 @@ public class BoardState implements BoardState_Interface {
         return new String[] {notationCoords, pieceNotation, specialIdentifier};
     }
 
+    /**
+     * Make a move on the chess board
+     * 
+     * @return true if the move was successfully made
+     */
     @Override
-    public void makeMove(String inputMove) throws InvalidMoveException, InternalApplicationException {
-        if (!possibleMoves.contains(inputMove)) throw new InvalidMoveException("The move " + inputMove + " is not a valid move.");
+    public boolean makeMove(String inputMove) {
+        if (!possibleMoves.contains(inputMove)) return false;
 
-        movePiece(inputMove);
+        try {
+            movePiece(inputMove);
+        } catch (InternalApplicationException | InvalidMoveException e) {
+            return false;
+        }
         toggleTurn();
         setPossibleMoves();
+        return true;
     }
 
     private void movePiece(String move) throws InternalApplicationException, InvalidMoveException {
@@ -737,7 +763,17 @@ public class BoardState implements BoardState_Interface {
                 }
                 boardPrint += fill + "|";
             }
-            boardPrint += "\n  |---|---|---|---|---|---|---|---|\n";
+            if (y == 5 && (possibleMoves.size() < 1 || board.size() == 2)) {
+                if (blackInCheck()) {
+                    boardPrint += "\n  |---| " + ANSI_ORANGE + "CHECKMATE: " + ANSI_BLUE + "WHITE WINS" + ANSI_RESET + " |---|\n";
+                } else if (whiteInCheck()) {
+                    boardPrint += "\n  |---| " + ANSI_ORANGE + "CHECKMATE: " + ANSI_RED + "BLACK WINS" + ANSI_RESET + " |---|\n";
+                } else {
+                    boardPrint += "\n  |---|---|-- " + ANSI_PURPLE + "STALEMATE" + ANSI_RESET + " --|---|---|\n";
+                }
+            } else {
+                boardPrint += "\n  |---|---|---|---|---|---|---|---|\n";
+            }
         }
         boardPrint += "    a   b   c   d   e   f   g   h\n";
         System.out.println(boardPrint);
@@ -763,11 +799,19 @@ public class BoardState implements BoardState_Interface {
         }
     }
 
-    private boolean whiteInCheck() {
+    /**
+     * @return true if white is in check
+     */
+    @Override
+    public boolean whiteInCheck() {
         return inCheckWhite;
     }
 
-    private boolean blackInCheck() {
+    /**
+     * @return true if black is in check
+     */
+    @Override
+    public boolean blackInCheck() {
         return inCheckBlack;
     }
 
