@@ -1,5 +1,6 @@
 package main;
 
+import java.security.SecureRandom;
 import java.util.List;
 
 import main.boardState.BoardState;
@@ -18,28 +19,39 @@ public class Chessel {
     public static void main(String[] args) throws Exception {
         BoardState board = BoardState.getBoardState();
         board.setPossibleMoves();
-        
-        for (int i = 0; i < 100; i++) {
-            String turn = "White";
+
+        List<String> possibleMoves = board.getPossibleMoves();
+        while (board.getPossibleMoves().size() > 0 || board.getBoard().size() <= 2) {
+            SecureRandom random = new SecureRandom();
             board.printCurrentBoard();
-            if (board.getTurn() == 'b') turn = "Black";
-            System.out.println(turn + " to move: ");
-            boolean invalidMove = true;
-            do {
-                String inputMove = System.console().readLine();
-                try {
-                    board.makeMove(inputMove);
-                    invalidMove = false;
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                    System.out.println("Please try again: ");
-                }
-            } while (invalidMove);
-            System.out.println("\nPOSSIBLE MOVES:");
-            List<String> possibleMoves = board.getPossibleMoves();
-            for (String move : possibleMoves) {
-                System.out.println(move);
-            }
+            int chosenMove = random.nextInt(possibleMoves.size());
+            board.makeMove(possibleMoves.get(chosenMove));
+            possibleMoves = board.getPossibleMoves();
         }
+
+        System.out.println("FINISHED");
+        
+        // for (int i = 0; i < 100; i++) {
+        //     String turn = "White";
+        //     board.printCurrentBoard();
+        //     if (board.getTurn() == 'b') turn = "Black";
+        //     System.out.println(turn + " to move: ");
+        //     boolean invalidMove = true;
+        //     do {
+        //         String inputMove = System.console().readLine();
+        //         try {
+        //             board.makeMove(inputMove);
+        //             invalidMove = false;
+        //         } catch (Exception e) {
+        //             System.out.println(e.getMessage());
+        //             System.out.println("Please try again: ");
+        //         }
+        //     } while (invalidMove);
+        //     System.out.println("\nPOSSIBLE MOVES:");
+        //     List<String> possibleMoves = board.getPossibleMoves();
+        //     for (String move : possibleMoves) {
+        //         System.out.println(move);
+        //     }
+        // }
     }
 }

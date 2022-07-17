@@ -156,6 +156,7 @@ public class PieceUtils {
 
     public static List<String> getPawnMoves(Piece piece) {
         List<String> pawnMoves = new ArrayList<>();
+        Map<String, Piece> board = BoardState.getBoardState().getBoard();
 
         Direction direction = Direction.POSITIVE;
         if (piece.getTeam() == 'b') direction = Direction.NEGATIVE;
@@ -163,22 +164,46 @@ public class PieceUtils {
         int movementDirection = getSign(direction);
 
         String inFrontOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (1 * movementDirection));
-        pawnMoves.add(inFrontOfPawn);
+        if (inFrontOfPawn.charAt(1) == '8' || inFrontOfPawn.charAt(1) == '1') {
+            pawnMoves.add(inFrontOfPawn + "Q");
+            pawnMoves.add(inFrontOfPawn + "R");
+            pawnMoves.add(inFrontOfPawn + "B");
+            pawnMoves.add(inFrontOfPawn + "N");
+        } else {
+            pawnMoves.add(inFrontOfPawn);
+        }
 
         if (!piece.hasMoved()) {
             String twoInFrontOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (2 * movementDirection));
-            pawnMoves.add(twoInFrontOfPawn);
+            if (!board.containsKey(ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() + (1 * movementDirection)))) {
+                pawnMoves.add(twoInFrontOfPawn);
+            }
         }
 
         char currentFile = (char) (piece.getX_pos() + 96);
         if (piece.getX_pos() + 1 <= 8) {
             String forwardRightOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos() + 1, piece.getY_pos() + (1 * movementDirection));
-            pawnMoves.add(currentFile + "x" + forwardRightOfPawn);
+            if (forwardRightOfPawn.charAt(1) == '8' || forwardRightOfPawn.charAt(1) == '1') {
+                pawnMoves.add(currentFile + "x" + forwardRightOfPawn + "Q");
+                pawnMoves.add(currentFile + "x" + forwardRightOfPawn + "R");
+                pawnMoves.add(currentFile + "x" + forwardRightOfPawn + "B");
+                pawnMoves.add(currentFile + "x" + forwardRightOfPawn + "N");
+            } else {
+                pawnMoves.add(currentFile + "x" + forwardRightOfPawn);
+            }
+            
         }
         
-        if (piece.getX_pos() -1 >= 1) {
+        if (piece.getX_pos() - 1 >= 1) {
             String forwardLeftOfPawn = ChesselUtils.convertXYPosToNotation(piece.getX_pos() - 1, piece.getY_pos() + (1 * movementDirection));
-            pawnMoves.add(currentFile + "x" + forwardLeftOfPawn);
+            if (forwardLeftOfPawn.charAt(1) == '8' || forwardLeftOfPawn.charAt(1) == '1') {
+                pawnMoves.add(currentFile + "x" + forwardLeftOfPawn + "Q");
+                pawnMoves.add(currentFile + "x" + forwardLeftOfPawn + "R");
+                pawnMoves.add(currentFile + "x" + forwardLeftOfPawn + "B");
+                pawnMoves.add(currentFile + "x" + forwardLeftOfPawn + "N");
+            } else {
+                pawnMoves.add(currentFile + "x" + forwardLeftOfPawn);
+            }
         }
 
         return pawnMoves;
