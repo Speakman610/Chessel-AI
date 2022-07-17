@@ -21,7 +21,7 @@ public class Chessel {
         board.setPossibleMoves();
 
         List<String> possibleMoves = board.getPossibleMoves();
-        while (board.getPossibleMoves().size() > 0 || board.getBoard().size() <= 2) {
+        while (board.getPossibleMoves().size() > 0 && board.getBoard().size() != 2) {
             SecureRandom random = new SecureRandom();
             board.printCurrentBoard();
             int chosenMove = random.nextInt(possibleMoves.size());
@@ -29,6 +29,7 @@ public class Chessel {
             possibleMoves = board.getPossibleMoves();
         }
 
+        board.printCurrentBoard();
         System.out.println("FINISHED");
         
         // for (int i = 0; i < 100; i++) {

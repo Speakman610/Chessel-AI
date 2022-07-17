@@ -542,7 +542,7 @@ public class BoardState implements BoardState_Interface {
                         specialIdentifier = move.substring(1, i - 1);
                         if (specialIdentifier.endsWith("x")) {
                             if (specialIdentifier.length() > 1) {
-                                specialIdentifier = specialIdentifier.substring(0, specialIdentifier.charAt(specialIdentifier.length() - 1));
+                                specialIdentifier = specialIdentifier.substring(0, specialIdentifier.length() - 2);
                             } else {
                                 specialIdentifier = "";
                             }
@@ -557,8 +557,6 @@ public class BoardState implements BoardState_Interface {
     @Override
     public void makeMove(String inputMove) throws InvalidMoveException, InternalApplicationException {
         if (!possibleMoves.contains(inputMove)) throw new InvalidMoveException("The move " + inputMove + " is not a valid move.");
-
-        System.out.println("Special Identifier: " + splitMoveNotation(inputMove)[2]);
 
         movePiece(inputMove);
         toggleTurn();
@@ -634,10 +632,10 @@ public class BoardState implements BoardState_Interface {
                             enPassantCoords = ChesselUtils.convertXYPosToNotation(piece.getX_pos(), piece.getY_pos() - 1);
                         }
                     }
+                    break;
                 } else if (piece.getPossibleMoves().contains(piece.getNotation() + "x" + notationCoords)) {
                     pieceToMove = piece;
                     enPassantCoords = "";
-
                     break;
                 }
             }
