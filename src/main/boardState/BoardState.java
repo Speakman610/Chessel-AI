@@ -49,6 +49,20 @@ public class BoardState implements BoardState_Interface {
      */
 
     private BoardState() {
+        resetBoard();
+    }
+
+    @Override
+    public void resetBoard() {
+        whiteCanCastleKingSide = false;
+        whiteCanCastleQueenSide = false;
+        blackCanCastleKingSide = false;
+        blackCanCastleQueenSide = false;
+        whiteKingCoords = null;
+        blackKingCoords = null;
+        enPassantCoords = null;
+        possibleMoves = null;
+
         // create the board and add all of the pieces
         board = new HashMap<>();
 
@@ -104,6 +118,8 @@ public class BoardState implements BoardState_Interface {
     public void setCustomBoard(Map<String, Piece> board, char turn) {
         this.board = board;
         this.turn = turn;
+        setPossibleMoves();
+        setCheckFlags();
     }
 
     /**
@@ -248,7 +264,7 @@ public class BoardState implements BoardState_Interface {
     private void identifyDuplicateMoves() {
         HashSet<String> duplicatecheck = new HashSet<>();
         List<String>duplicateMoves = new ArrayList<>();
-        for (String move : possibleMoves) {
+        for (String move : getPossibleMoves()) {
             if (!duplicatecheck.add(move)) {
                 duplicateMoves.add(move);
             }
@@ -577,7 +593,7 @@ public class BoardState implements BoardState_Interface {
      */
     @Override
     public boolean makeMove(String inputMove) {
-        if (!possibleMoves.contains(inputMove)) return false;
+        if (!getPossibleMoves().contains(inputMove) || gameEnded()) return false;
 
         try {
             movePiece(inputMove);
@@ -763,7 +779,7 @@ public class BoardState implements BoardState_Interface {
                 }
                 boardPrint += fill + "|";
             }
-            if (y == 5 && (possibleMoves.size() < 1 || board.size() == 2)) {
+            if (y == 5 && gameEnded()) {
                 if (blackInCheck()) {
                     boardPrint += "\n  |---| " + ANSI_ORANGE + "CHECKMATE: " + ANSI_BLUE + "WHITE WINS" + ANSI_RESET + " |---|\n";
                 } else if (whiteInCheck()) {
@@ -783,6 +799,29 @@ public class BoardState implements BoardState_Interface {
         return this.board;
     }
 
+    @Override
+    public String[][] getBoardAs2DArray() {
+        String[][] boardAs2DArray = new String[8][8];
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                String coords = ChesselUtils.convertXYPosToNotation(x + 1, y + 1);
+                Piece piece = board.get(coords);
+                String pieceStr = "";
+                if (piece != null) {
+                    pieceStr = "" + piece.getTeam();
+                    if (piece.getClass() == Pawn.class) {
+                        pieceStr += "P";
+                    } else {
+                        pieceStr += piece.getNotation();
+                    }
+                }
+                boardAs2DArray[x][y] = pieceStr;
+            }
+        }
+        return boardAs2DArray;
+    }
+
+    @Override
     public char getTurn() {
         return this.turn;
     }
@@ -831,6 +870,22 @@ public class BoardState implements BoardState_Interface {
      */
     private boolean turnBlack() {
         return turn == 'b';
+    }
+
+    @Override
+    public boolean gameEnded() {
+        boolean neitherSideCanCheckmate = false;
+        if (board.size() <= 4) {
+            neitherSideCanCheckmate = true;
+            for (Piece piece : board.values()) {
+                if (piece.getClass() != King.class &&
+                    piece.getClass() != Knight.class &&
+                    piece.getClass() != Bishop.class) {
+                        neitherSideCanCheckmate = false;
+                }
+            }
+        }
+        return (getPossibleMoves().size() < 1 || neitherSideCanCheckmate);
     }
 
 }

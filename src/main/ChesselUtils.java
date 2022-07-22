@@ -51,4 +51,43 @@ public class ChesselUtils {
     private static int convertCharToInt(char character, int subValue) {
         return (int) (character - subValue);
     }
+
+    /**
+     * Takes a move as a parameter and separates the coordinates where the 
+     * piece will be moved to from the letter that signifies a given piece,
+     * returning them as a String array.
+     * 
+     * @param move is the move to be made
+     * @return a string array with the notationCoords at index 0, the pieceNotation at index 1
+     * and the  specialIdentifier at 2
+     */
+    public static String[] splitMoveNotation(String move) {
+        String notationCoords = "";
+        String pieceNotation = "";
+        String specialIdentifier = "";
+
+        for (int i = move.length() - 1; i >= 0; i--) {
+            char currentChar = move.charAt(i);
+            // 1 -> 49, 8 -> 56
+            if (currentChar >= 49 && currentChar <= 56) {
+                char previousChar = move.charAt(i - 1);
+                // a -> 97, h -> 104
+                if (previousChar >= 97 && previousChar <= 104) {
+                    notationCoords = previousChar + "" + currentChar;
+                    pieceNotation = "" + move.charAt(0);
+                    if (move.length() > 3) {
+                        specialIdentifier = move.substring(1, i - 1);
+                        if (specialIdentifier.endsWith("x")) {
+                            if (specialIdentifier.length() > 1) {
+                                specialIdentifier = specialIdentifier.substring(0, specialIdentifier.length() - 2);
+                            } else {
+                                specialIdentifier = "";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return new String[] {notationCoords, pieceNotation, specialIdentifier};
+    }
 }
