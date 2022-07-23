@@ -110,16 +110,67 @@ public class BoardState implements BoardState_Interface {
     }
 
     /**
-     * Sets the board to a given state. Used for testing the BoardState class
+     * Sets the board to a given state. Used for testing the BoardState class.
+     * Takes a map with the location of a piece as the key and the team and piece notation 
+     * as the value. For example, the white King is marked as wK and a black Rook is marked
+     * as bR. For pawns the piece notation is a P.
      * 
      * @param board is the state that you wish the board to be in
      * @param turn is the current turn where 'w' is white and 'b' is black
      */
-    public void setCustomBoard(Map<String, Piece> board, char turn) {
-        this.board = board;
+    public void setCustomBoard(Map<String, String> customBoard, char turn) {
+        board = new HashMap<>();
+        for (Map.Entry<String, String> entry : customBoard.entrySet()) {
+            String pieceNotation = entry.getValue();
+            String notationCoords = entry.getKey();
+            int[] xy_pos = ChesselUtils.convertNotationCoordToXYCoord(notationCoords);
+            int x_pos = xy_pos[0];
+            int y_pos = xy_pos[1];
+            Piece piece = null;
+
+            switch (pieceNotation.charAt(1)) {
+                case 'K':
+                    piece = new King(pieceNotation.charAt(0), x_pos, y_pos);
+                    break;
+                case 'Q':
+                    piece = new Queen(pieceNotation.charAt(0), x_pos, y_pos);
+                    break;
+                case 'R':
+                    piece = new Rook(pieceNotation.charAt(0), x_pos, y_pos);
+                    break;
+                case 'B':
+                    piece = new Bishop(pieceNotation.charAt(0), x_pos, y_pos);
+                    break;
+                case 'N':
+                    piece = new Knight(pieceNotation.charAt(0), x_pos, y_pos);
+                    break;
+                case 'P':
+                    piece = new Pawn(pieceNotation.charAt(0), x_pos, y_pos);
+                    break;
+            }
+            
+            if (piece != null) board.put(notationCoords, piece);
+        }
         this.turn = turn;
         setPossibleMoves();
         setCheckFlags();
+    }
+
+    @Override
+    public Map<String, String> getStringBoard() {
+        Map<String, String> stringBoard = new HashMap<>();
+
+        for (Map.Entry<String, Piece> entry : board.entrySet()) {
+            Piece piece = entry.getValue();
+            String notationCoords = entry.getKey();
+            String pieceNotation = piece.getNotation();
+            
+            if (piece.getClass() == Pawn.class) pieceNotation = "P";
+
+            stringBoard.put(notationCoords, piece.getTeam() + pieceNotation);
+        }
+
+        return stringBoard;
     }
 
     /**
