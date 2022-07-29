@@ -1,5 +1,6 @@
 package main;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Scanner;
@@ -25,7 +26,7 @@ public class Chessel {
         CHESSEL
     }
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Scanner scan = new Scanner(System.in);
         int choice = -1;
 
@@ -37,21 +38,25 @@ public class Chessel {
                 case 1:
                     // Player vs. Chessel
                     playGame(PlayerType.PLAYER, PlayerType.CHESSEL);
+                    waitToContinue();
                     board.resetBoard();
                     break;
                 case 2:
                     // Player vs. Player
                     playGame(PlayerType.PLAYER, PlayerType.PLAYER);
+                    waitToContinue();
                     board.resetBoard();
                     break;
                 case 3:
                     // Chessel vs. Chessel
                     playGame(PlayerType.CHESSEL, PlayerType.CHESSEL);
+                    waitToContinue();
                     board.resetBoard();
                     break;
                 case 4:
                     // Train Chessel
                     System.out.println("\nThis option is not yet supported.");
+                    waitToContinue();
                     break;
                 case 5:
                     // Exit
@@ -65,7 +70,8 @@ public class Chessel {
     }
 
     private static void printMenu() {
-        System.out.print(ANSI_ORANGE + "\nChessel Menu : Enter one of the following...\n" + ANSI_RESET +
+        clearTerminal();
+        System.out.print(ANSI_ORANGE + "\nChessel Menu - Enter one of the following:\n" + ANSI_RESET +
                 ANSI_CYAN + "1) Player vs. Chessel\n" + ANSI_RESET +
                 ANSI_CYAN + "2) Player vs. Player\n" + ANSI_RESET +
                 ANSI_CYAN + "3) Chessel vs. Chessel\n" + ANSI_RESET +
@@ -78,6 +84,7 @@ public class Chessel {
         board = BoardState.getBoardState();
         
         while (!board.gameEnded()) {
+            clearTerminal();
             board.printCurrentBoard();
 
             if (board.getTurn() == 'w') {
@@ -98,6 +105,7 @@ public class Chessel {
             }
             System.out.println("\n");
         }
+        clearTerminal();
         board.printCurrentBoard();
     }
 
@@ -119,5 +127,15 @@ public class Chessel {
         int chosenMove = random.nextInt(possibleMoves.size());
         System.out.print(possibleMoves.get(chosenMove) + "\n");
         board.makeMove(possibleMoves.get(chosenMove));
+    }
+
+    private static void waitToContinue() throws IOException {
+        System.out.print("Press enter to continue: ");
+        System.in.read();
+    }
+
+    private static void clearTerminal() {
+        System.out.print("\033[H\033[2J");  
+        System.out.flush();
     }
 }
