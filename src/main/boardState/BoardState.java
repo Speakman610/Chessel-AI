@@ -1,5 +1,6 @@
 package main.boardState;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -131,6 +132,9 @@ public class BoardState implements BoardState_Interface {
             switch (pieceNotation.charAt(1)) {
                 case 'K':
                     piece = new King(pieceNotation.charAt(0), x_pos, y_pos);
+                    if (x_pos != 5 || (y_pos != 1 && y_pos != 8)) {
+                        piece.setHasMoved(true);
+                    }
                     break;
                 case 'Q':
                     piece = new Queen(pieceNotation.charAt(0), x_pos, y_pos);
@@ -146,10 +150,18 @@ public class BoardState implements BoardState_Interface {
                     break;
                 case 'P':
                     piece = new Pawn(pieceNotation.charAt(0), x_pos, y_pos);
+                    if ((y_pos != 2 && piece.getTeam() == 'w') ||
+                        (y_pos != 7 && piece.getTeam() == 'b')) {
+                            piece.setHasMoved(true);
+                    }
                     break;
             }
             
-            if (piece != null) board.put(notationCoords, piece);
+            if (piece != null) {
+                board.put(notationCoords, piece);
+            } else {
+                throw new InvalidParameterException("Invalid piece notation passed to custom board.");
+            }
         }
         this.turn = turn;
         setPossibleMoves();
@@ -413,7 +425,8 @@ public class BoardState implements BoardState_Interface {
      * 
      * @return boolean. True if white king is in check.
      */
-    private boolean whiteIsInCheck() {
+    @Override
+    public boolean whiteIsInCheck() {
         return kingIsInCheck('w', whiteKingCoords);
     }
 
@@ -422,7 +435,8 @@ public class BoardState implements BoardState_Interface {
      * 
      * @return boolean. True if black king is in check.
      */
-    private boolean blackIsInCheck() {
+    @Override
+    public boolean blackIsInCheck() {
         return kingIsInCheck('b', blackKingCoords);
     }
 
@@ -494,9 +508,9 @@ public class BoardState implements BoardState_Interface {
 
                 setCheckFlags();
                 if (team == 'w') {
-                    if (!whiteInCheck()) validMoves.add(move);
+                    if (!inCheckWhite) validMoves.add(move);
                 } else {
-                    if (!blackInCheck()) validMoves.add(move);
+                    if (!inCheckBlack) validMoves.add(move);
                 }
                 
                 board = copyMap(boardCopy);
@@ -814,13 +828,13 @@ public class BoardState implements BoardState_Interface {
                     }
 
                     if (piece.getTeam() == 'w') {
-                        if (piece.getNotation() == "K" && whiteInCheck()) {
+                        if (piece.getNotation() == "K" && inCheckWhite) {
                             pieceNotation = ANSI_CYAN + pieceNotation + ANSI_RESET;
                         } else {
                             pieceNotation = ANSI_BLUE + pieceNotation + ANSI_RESET;
                         }
                     } else {
-                        if (piece.getNotation() == "K" && blackInCheck()) {
+                        if (piece.getNotation() == "K" && inCheckBlack) {
                             pieceNotation = ANSI_ORANGE + pieceNotation + ANSI_RESET;
                         } else {
                             pieceNotation = ANSI_RED + pieceNotation + ANSI_RESET;
@@ -831,9 +845,9 @@ public class BoardState implements BoardState_Interface {
                 boardPrint += fill + "|";
             }
             if (y == 5 && gameEnded()) {
-                if (blackInCheck()) {
+                if (inCheckBlack) {
                     boardPrint += "\n  |---| " + ANSI_ORANGE + "CHECKMATE: " + ANSI_BLUE + "WHITE WINS" + ANSI_RESET + " |---|\n";
-                } else if (whiteInCheck()) {
+                } else if (inCheckWhite) {
                     boardPrint += "\n  |---| " + ANSI_ORANGE + "CHECKMATE: " + ANSI_RED + "BLACK WINS" + ANSI_RESET + " |---|\n";
                 } else {
                     boardPrint += "\n  |---|---|-- " + ANSI_PURPLE + "STALEMATE" + ANSI_RESET + " --|---|---|\n";
@@ -887,22 +901,6 @@ public class BoardState implements BoardState_Interface {
         } else {
             setTurn('w');
         }
-    }
-
-    /**
-     * @return true if white is in check
-     */
-    @Override
-    public boolean whiteInCheck() {
-        return inCheckWhite;
-    }
-
-    /**
-     * @return true if black is in check
-     */
-    @Override
-    public boolean blackInCheck() {
-        return inCheckBlack;
     }
 
     /**

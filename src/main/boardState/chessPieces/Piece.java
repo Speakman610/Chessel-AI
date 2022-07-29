@@ -93,6 +93,11 @@ public abstract class Piece implements Cloneable {
         this.notation = notation;
     }
 
+    public void setHasMoved(boolean hasMoved) {
+        this.hasMoved = hasMoved;
+    }
+
+
     public List<String> getPossibleMoves() {
         return this.possibleMoves;
     }
