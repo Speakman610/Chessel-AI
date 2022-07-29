@@ -2,6 +2,7 @@ package main;
 
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Scanner;
 
 import main.boardState.BoardState;
 import main.boardState.BoardState_Interface;
@@ -16,45 +17,107 @@ public class Chessel {
     public static final String ANSI_PINK = "\u001B[35m";
     public static final String ANSI_PURPLE = "\u001B[36m";
     public static final String ANSI_WHITE = "\u001B[37m";
+
+    private static BoardState_Interface board;
+
+    private enum PlayerType {
+        PLAYER,
+        CHESSEL
+    }
     
-    public static void main(String[] args) throws Exception {
-        BoardState_Interface board = BoardState.getBoardState();
+    public static void main(String[] args) {
+        Scanner scan = new Scanner(System.in);
+        int choice = -1;
 
-        // List<String> possibleMoves = board.getPossibleMoves();
-        // while (!board.gameEnded()) {
-        //     SecureRandom random = new SecureRandom();
-        //     board.printCurrentBoard();
-        //     int chosenMove = random.nextInt(possibleMoves.size());
-        //     board.makeMove(possibleMoves.get(chosenMove));
-        //     possibleMoves = board.getPossibleMoves();
-        // }
+        while (choice != 5) {
+            printMenu();
+            choice = scan.nextInt();
 
-        // board.printCurrentBoard();
-        
-        List<String> possibleMoves = board.getPossibleMoves();
-        while (!board.gameEnded()) {
-            // String turn = "White";
-            board.printCurrentBoard();
-            // if (board.getTurn() == 'b') turn = "Black";
-            // System.out.println(turn + " to move: ");
-            if (board.getTurn() == 'w') {
-                boolean invalidMove = true;
-                do {
-                    System.out.println("Your move: ");
-                    String inputMove = System.console().readLine();
-                    if (board.makeMove(inputMove)) {
-                        invalidMove = false;
-                    }
-                } while (invalidMove);
-            } else {
-                possibleMoves = board.getPossibleMoves();
-                SecureRandom random = new SecureRandom();
-                // board.printCurrentBoard();
-                int chosenMove = random.nextInt(possibleMoves.size());
-                System.out.println("Chessel's move: \n" + possibleMoves.get(chosenMove) + "\n");
-                board.makeMove(possibleMoves.get(chosenMove));
+            switch (choice) {
+                case 1:
+                    // Player vs. Chessel
+                    playGame(PlayerType.PLAYER, PlayerType.CHESSEL);
+                    board.resetBoard();
+                    break;
+                case 2:
+                    // Player vs. Player
+                    playGame(PlayerType.PLAYER, PlayerType.PLAYER);
+                    board.resetBoard();
+                    break;
+                case 3:
+                    // Chessel vs. Chessel
+                    playGame(PlayerType.CHESSEL, PlayerType.CHESSEL);
+                    board.resetBoard();
+                    break;
+                case 4:
+                    // Train Chessel
+                    System.out.println("\nThis option is not yet supported.");
+                    break;
+                case 5:
+                    // Exit
+                    break;
+                default:
+                    break;
             }
         }
+
+        scan.close();
+    }
+
+    private static void printMenu() {
+        System.out.print(ANSI_ORANGE + "\nChessel Menu : Enter one of the following...\n" + ANSI_RESET +
+                ANSI_CYAN + "1) Player vs. Chessel\n" + ANSI_RESET +
+                ANSI_CYAN + "2) Player vs. Player\n" + ANSI_RESET +
+                ANSI_CYAN + "3) Chessel vs. Chessel\n" + ANSI_RESET +
+                ANSI_GREY + "4) Train Chessel\n" + ANSI_RESET +
+                ANSI_CYAN + "5) Exit\n\n" + ANSI_RESET +
+                ":");
+    }
+
+    private static void playGame(PlayerType white, PlayerType black) {
+        board = BoardState.getBoardState();
+        
+        while (!board.gameEnded()) {
+            board.printCurrentBoard();
+
+            if (board.getTurn() == 'w') {
+                System.out.print("White to move: ");
+                if (white == PlayerType.PLAYER) {
+                    playerMove();
+                } else {
+                    chesselMove();
+                }
+                
+            } else {
+                System.out.print("Black to move: ");
+                if (black == PlayerType.PLAYER) {
+                    playerMove();
+                } else {
+                    chesselMove();
+                }
+            }
+            System.out.println("\n");
+        }
         board.printCurrentBoard();
+    }
+
+    private static void playerMove() {
+        boolean invalidMove = true;
+        do {
+            String inputMove = System.console().readLine();
+            if (board.makeMove(inputMove)) {
+                invalidMove = false;
+            } else {
+                System.out.print(" (Invalid move, please try again\n:");
+            }
+        } while (invalidMove);
+    }
+    
+    private static void chesselMove() {
+        List<String> possibleMoves = board.getPossibleMoves();
+        SecureRandom random = new SecureRandom();
+        int chosenMove = random.nextInt(possibleMoves.size());
+        System.out.print(possibleMoves.get(chosenMove) + "\n");
+        board.makeMove(possibleMoves.get(chosenMove));
     }
 }
