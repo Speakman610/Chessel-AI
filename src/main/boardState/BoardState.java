@@ -926,12 +926,23 @@ public class BoardState implements BoardState_Interface {
         boolean neitherSideCanCheckmate = false;
         if (board.size() <= 4) {
             neitherSideCanCheckmate = true;
+            int numBlackPieces = 0;
+            int numWhitePieces = 0;
             for (Piece piece : board.values()) {
+                if (piece.getTeam() == 'w') {
+                    numWhitePieces++;
+                } else {
+                    numBlackPieces++;
+                }
+
                 if (piece.getClass() != King.class &&
                     piece.getClass() != Knight.class &&
                     piece.getClass() != Bishop.class) {
                         neitherSideCanCheckmate = false;
                 }
+            }
+            if (numWhitePieces > 2 || numBlackPieces > 2) {
+                neitherSideCanCheckmate = false;
             }
         }
         return (getPossibleMoves().size() < 1 || neitherSideCanCheckmate);
